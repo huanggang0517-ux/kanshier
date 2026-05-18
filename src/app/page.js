@@ -8,8 +8,8 @@ export default function HomePage() {
 
   const gridServices = [
     { href: '/bazi', icon: '☰', title: '八字精批', price: '¥19.9' },
-    { href: '/shouxiang', icon: '✋', title: 'AI 手相', price: '¥19.9' },
-    { href: '/mianxiang', icon: '👤', title: 'AI 面相', price: '¥19.9' },
+    { href: '/taohua', icon: '🌺', title: '测桃花', price: '¥19.9' },
+    { href: '/letter', icon: '✉', title: '给未来写信', price: '¥9.9' },
     { href: '/xingming', icon: '文', title: '姓名·起名', price: '¥9.9' },
   ]
 
