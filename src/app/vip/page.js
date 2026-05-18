@@ -27,13 +27,13 @@ export default function VipPage() {
       <Header />
       <div className="flex items-center gap-3 py-2 border-b mb-6" style={{ borderColor: 'var(--border-color)' }}>
         <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>看事儿年卡</span>
+        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>年卡会员</span>
       </div>
 
       <div className="text-center py-8">
         <div className="text-4xl mb-4">👑</div>
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>看事儿年卡</h2>
-        <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>看事儿功能无限次使用 · 一年有效</p>
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>年卡会员</h2>
+        <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>全部服务无限次使用 · 一年有效</p>
       </div>
 
       <div
@@ -46,23 +46,31 @@ export default function VipPage() {
           <span className="text-base font-normal" style={{ color: 'var(--text-secondary)' }}>/年</span>
         </div>
         <div className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          看事儿三字测吉凶 · 无限次问事<br />
-          ¥8.8/次 → 全年免费
+          八字精批 · 测桃花 · AI起名 · 写给明年<br />
+          全部无限次使用
         </div>
       </div>
 
       <div className="flex flex-col gap-3 mb-8">
         <div className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
-          <span>每日任意问事</span>
-          <span style={{ color: 'var(--gold-primary)' }}>不限次</span>
+          <span>看事儿（三字测吉凶）</span>
+          <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
         </div>
         <div className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
-          <span>测字 + 数字卦</span>
-          <span style={{ color: 'var(--gold-primary)' }}>全部支持</span>
+          <span>八字精批</span>
+          <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
         </div>
         <div className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
-          <span>新用户免费 6 次</span>
-          <span style={{ color: 'var(--gold-primary)' }}>可叠加</span>
+          <span>测桃花</span>
+          <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
+        </div>
+        <div className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
+          <span>姓名·起名</span>
+          <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
+        </div>
+        <div className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
+          <span>写给明年</span>
+          <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
         </div>
       </div>
 

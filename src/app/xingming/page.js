@@ -133,7 +133,7 @@ export default function XingmingPage() {
         className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-8"
         style={{ background: 'var(--gold-primary)' }}
       >
-        {loading ? '测算中...' : mode === 'score' ? '开始测算 · ¥9.9' : '开始起名 · ¥9.9'}
+        {loading ? '测算中...' : mode === 'score' ? '开始测算 · ¥8.8' : '开始起名 · ¥8.8'}
       </button>
     </>
   )

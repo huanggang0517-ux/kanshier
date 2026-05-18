@@ -95,7 +95,7 @@ export default function TaohuaPage() {
       <button onClick={handleSubmit} disabled={loading}
         className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-8"
         style={{ background: 'var(--gold-primary)' }}>
-        {loading ? '测算中...' : '测桃花 · ¥19.9'}
+        {loading ? '测算中...' : '测桃花 · ¥6.6'}
       </button>
     </>
   )

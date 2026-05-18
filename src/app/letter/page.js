@@ -53,11 +53,11 @@ export default function LetterPage() {
       <Header />
       <div className="flex items-center gap-3 py-2 border-b mb-6" style={{ borderColor: 'var(--border-color)' }}>
         <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>给未来的自己写信</span>
+        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>写给明年</span>
       </div>
 
       <div className="flex flex-col gap-3 mb-4">
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>写一段话给未来的自己，会收到温暖的回应</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>写一段话给明年的自己，到日子了会提醒你回来打开</p>
         <div className="flex flex-wrap gap-2">
           {prompts.map((p, i) => (
             <button key={i} onClick={() => setContent(prev => prev + p + '\n')}
@@ -91,7 +91,7 @@ export default function LetterPage() {
       <button onClick={handleSubmit} disabled={loading}
         className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-6"
         style={{ background: 'var(--gold-primary)' }}>
-        {loading ? '寄送中...' : '寄给未来 · ¥9.9'}
+        {loading ? '寄送中...' : '寄给未来 · ¥0.52'}
       </button>
     </>
   )

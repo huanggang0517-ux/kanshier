@@ -112,7 +112,7 @@ export default function BaziPage() {
         className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-8"
         style={{ background: 'var(--gold-primary)' }}
       >
-        {loading ? '排盘中...' : '开始批算 · ¥19.9'}
+        {loading ? '排盘中...' : '开始批算 · ¥6.6'}
       </button>
     </>
   )

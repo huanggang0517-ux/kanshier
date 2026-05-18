@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import LetterReminder from '@/components/LetterReminder'
 import './globals.css'
 
 export const metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <div className="container">
             {children}
+            <LetterReminder />
           </div>
         </ThemeProvider>
       </body>

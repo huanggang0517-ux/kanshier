@@ -2,6 +2,45 @@ import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { callDeepSeek } from '@/lib/deepseek'
 
+export async function GET(req) {
+  try {
+    const supabase = getSupabase()
+    if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
+
+    const { searchParams } = new URL(req.url)
+    const userId = searchParams.get('userId')
+    if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+
+    const { data: readings } = await supabase
+      .from('readings')
+      .select('id, created_at, input_data')
+      .eq('user_id', userId)
+      .eq('service_type', 'letter')
+      .order('created_at', { ascending: false })
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const deliverable = (readings || []).filter(r => {
+      const fd = r.input_data?.futureDate
+      if (!fd) return false
+      if (r.input_data?.delivered_at) return false
+      return fd <= today
+    })
+
+    return NextResponse.json({
+      has_deliverable: deliverable.length > 0,
+      letters: deliverable.map(r => ({
+        id: r.id,
+        future_date: r.input_data.futureDate,
+        created_at: r.created_at
+      }))
+    })
+  } catch (err) {
+    console.error('letter check error:', err)
+    return NextResponse.json({ error: '服务器繁忙' }, { status: 500 })
+  }
+}
+
 const LETTER_SYSTEM_PROMPT = `你是一位温暖睿智的见证者。用户会给未来的自己写一封信。
 
 规则：
