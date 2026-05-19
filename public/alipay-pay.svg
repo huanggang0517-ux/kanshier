@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#f5f5f5"/>
+  <text x="200" y="180" text-anchor="middle" font-size="20" fill="#999">支付宝收款码</text>
+  <text x="200" y="210" text-anchor="middle" font-size="14" fill="#bbb">请替换为你的收款码图片</text>
+  <text x="200" y="240" text-anchor="middle" font-size="14" fill="#bbb">文件: public/alipay-pay.jpg</text>
+</svg>

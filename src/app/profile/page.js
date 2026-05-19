@@ -114,6 +114,16 @@ export default function ProfilePage() {
         </a>
       )}
 
+      <a href="/admin">
+        <div
+          className="rounded-xl p-4 mb-4 border flex justify-between items-center"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
+        >
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>管理后台</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>→</span>
+        </div>
+      </a>
+
       <div className="mb-4">
         <button
           onClick={() => { setShowChangePwd(!showChangePwd); setPwdError(''); setPwdSuccess('') }}
