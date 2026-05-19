@@ -44,7 +44,7 @@ export default function HomePage() {
         >
           <div>
             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>年卡会员 · 全部无限用</div>
-            <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>¥58 / 年 · 八字/桃花/起名/写信全包</div>
+            <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>¥18.8 / 年 · 八字/桃花/起名/写信全包</div>
           </div>
           <div
             className="text-white text-xs font-semibold px-4 py-1.5 rounded-full"

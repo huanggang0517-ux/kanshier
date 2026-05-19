@@ -108,7 +108,7 @@ export default function ProfilePage() {
             className="rounded-xl p-4 mb-4 border flex justify-between items-center"
             style={{ background: 'var(--gradient-card)', borderColor: 'var(--border-color)' }}
           >
-            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>开通看事儿年卡 ¥58</span>
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>开通年卡 ¥18.8</span>
             <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>→</span>
           </div>
         </a>

@@ -38,7 +38,7 @@ export default function VipPage() {
         style={{ background: 'var(--gradient-card)', borderColor: 'var(--border-color)' }}>
         <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>限时特惠</div>
         <div className="text-4xl font-bold my-3" style={{ color: 'var(--gold-primary)' }}>
-          ¥58
+          ¥18.8
           <span className="text-base font-normal" style={{ color: 'var(--text-secondary)' }}>/年</span>
         </div>
         <div className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
