@@ -60,7 +60,7 @@ export async function POST(req) {
     if (action === 'remove_vip') {
       await supabase
         .from('users')
-        .update({ is_vip: false, vip_expiry: null })
+        .update({ is_vip: false, vip_expiry: null, free_count: 0 })
         .eq('id', userId)
 
       return NextResponse.json({ success: true, message: '已取消年卡会员' })

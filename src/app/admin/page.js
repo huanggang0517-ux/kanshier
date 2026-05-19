@@ -38,7 +38,7 @@ export default function AdminPage() {
 
     const updated = users.map(u =>
       u.id === userId
-        ? { ...u, is_vip: action === 'set_vip', vip_expiry: action === 'set_vip' ? new Date().toISOString() : null, free_count: action === 'set_vip' ? 999 : u.free_count }
+        ? { ...u, is_vip: action === 'set_vip', vip_expiry: action === 'set_vip' ? new Date().toISOString() : null, free_count: action === 'set_vip' ? 999 : 0 }
         : u
     )
     setUsers(updated)
