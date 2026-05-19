@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { callDeepSeek, getTaohuaSystemPrompt } from '@/lib/deepseek'
+import { checkVipExpiry } from '@/lib/auth'
 
 export async function POST(req) {
   try {
@@ -13,9 +14,11 @@ export async function POST(req) {
     }
 
     const { data: user } = await supabase
-      .from('users').select('free_count, is_vip').eq('id', userId).single()
+      .from('users').select('free_count, is_vip, vip_expiry').eq('id', userId).single()
     if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 })
-    if (!user.is_vip && user.free_count < 1) {
+
+    const activeUser = await checkVipExpiry(supabase, user)
+    if (!activeUser.is_vip && activeUser.free_count < 1) {
       return NextResponse.json({ error: '次数不足' }, { status: 403 })
     }
 
@@ -37,8 +40,8 @@ ${question ? `想问：${question}` : ''}
       return NextResponse.json({ error: '解读生成异常' }, { status: 500 })
     }
 
-    if (!user.is_vip) {
-      await supabase.from('users').update({ free_count: user.free_count - 1 }).eq('id', userId)
+    if (!activeUser.is_vip) {
+      await supabase.from('users').update({ free_count: activeUser.free_count - 1 }).eq('id', userId)
     }
 
     const { data: reading } = await supabase
@@ -47,7 +50,7 @@ ${question ? `想问：${question}` : ''}
       .select()
       .single()
 
-    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining: user.is_vip ? -1 : user.free_count - 1 })
+    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1 })
   } catch (err) {
     console.error('taohua error:', err)
     return NextResponse.json({ error: '服务器繁忙' }, { status: 500 })

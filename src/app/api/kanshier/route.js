@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { callDeepSeek, getKanshierSystemPrompt } from '@/lib/deepseek'
+import { checkVipExpiry } from '@/lib/auth'
 
 export async function POST(req) {
   try {
@@ -15,7 +16,7 @@ export async function POST(req) {
 
     const { data: user } = await supabase
       .from('users')
-      .select('free_count, is_vip')
+      .select('free_count, is_vip, vip_expiry')
       .eq('id', userId)
       .single()
 
@@ -23,7 +24,9 @@ export async function POST(req) {
       return NextResponse.json({ error: '用户不存在' }, { status: 404 })
     }
 
-    const canProceed = user.is_vip || user.free_count > 0
+    const activeUser = await checkVipExpiry(supabase, user)
+
+    const canProceed = activeUser.is_vip || activeUser.free_count > 0
     if (!canProceed) {
       return NextResponse.json({ error: '次数不足，请购买年卡', needPayment: true }, { status: 403 })
     }
@@ -42,10 +45,10 @@ export async function POST(req) {
       return NextResponse.json({ error: '解读生成异常，请重试' }, { status: 500 })
     }
 
-    if (!user.is_vip) {
+    if (!activeUser.is_vip) {
       await supabase
         .from('users')
-        .update({ free_count: user.free_count - 1 })
+        .update({ free_count: activeUser.free_count - 1 })
         .eq('id', userId)
     }
 
@@ -64,7 +67,7 @@ export async function POST(req) {
       success: true,
       reading_id: reading.id,
       result: parsed,
-      remaining: user.is_vip ? -1 : user.free_count - 1
+      remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1
     })
   } catch (err) {
     console.error('kanshier error:', err)
