@@ -63,7 +63,7 @@ export default function VipPage() {
 
       <div className="rounded-xl p-6 border text-center"
         style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-        <img src={`/${payMethod}-pay.svg`} alt={`${payMethod}收款码`}
+        <img src={`/${payMethod}-pay.jpg`} alt={`${payMethod}收款码`}
           className="w-48 h-48 mx-auto mb-3 rounded-lg"
           onError={e => { e.target.style.display = 'none' }} />
         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
