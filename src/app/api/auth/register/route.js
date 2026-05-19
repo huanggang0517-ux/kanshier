@@ -17,7 +17,7 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { phone, password } = await req.json()
+    const { phone, password, inviteCode } = await req.json()
 
     if (!phone || !password || phone.length !== 11) {
       return NextResponse.json({ error: '请输入正确的手机号和密码' }, { status: 400 })
@@ -46,6 +46,22 @@ export async function POST(req) {
       .single()
 
     if (error) throw error
+
+    // 如果填了邀请码，给邀请人加1次使用次数
+    if (inviteCode) {
+      const { data: inviter } = await supabase
+        .from('users')
+        .select('id, free_count')
+        .eq('invite_code', inviteCode.toUpperCase())
+        .single()
+
+      if (inviter) {
+        await supabase
+          .from('users')
+          .update({ free_count: (inviter.free_count || 0) + 1 })
+          .eq('id', inviter.id)
+      }
+    }
 
     return NextResponse.json({
       success: true,

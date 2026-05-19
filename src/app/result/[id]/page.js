@@ -10,6 +10,7 @@ export default function ResultPage() {
   const { id } = useParams()
   const router = useRouter()
   const [result, setResult] = useState(null)
+  const [serviceType, setServiceType] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function ResultPage() {
         }
 
         setResult(data.result)
+        setServiceType(data.reading?.service_type || 'kanshier')
       } catch {
         router.push('/')
       } finally {
@@ -54,7 +56,9 @@ export default function ResultPage() {
       <Header />
       <div className="flex items-center gap-3 py-2 border-b mb-2" style={{ borderColor: 'var(--border-color)' }}>
         <button onClick={() => router.push('/')} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>看事儿 · 结果</span>
+        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+          {({ kanshier: '看事儿', bazi: '八字精批', taohua: '测桃花', xingming: '姓名·起名', letter: '写给明年' })[serviceType] || '看事儿'} · 结果
+        </span>
       </div>
 
       <ResultDisplay result={result} />
@@ -83,11 +87,14 @@ export default function ResultPage() {
           📤 分享
         </button>
         <button
-          onClick={() => router.push('/kanshier')}
+          onClick={() => {
+            const paths = { bazi: '/bazi', taohua: '/taohua', xingming: '/xingming', letter: '/letter' }
+            router.push(paths[serviceType] || '/kanshier')
+          }}
           className="flex-1 rounded-xl py-3 text-xs font-semibold text-white"
           style={{ background: 'var(--gold-primary)' }}
         >
-          再问一事
+          {({ bazi: '再批一命', taohua: '再测桃花', xingming: '继续测算', letter: '再写一封' })[serviceType] || '再问一事'}
         </button>
       </div>
 

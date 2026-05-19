@@ -9,6 +9,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [users, setUsers] = useState([])
+  const [pendingOrders, setPendingOrders] = useState([])
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -21,20 +22,32 @@ export default function AdminPage() {
     setUser(u)
     fetch(`/api/admin?adminId=${u.id}`)
       .then(r => r.json())
-      .then(data => { setUsers(data.users || []); setLoading(false) })
+      .then(data => { setUsers(data.users || []); setPendingOrders(data.pendingOrders || []); setLoading(false) })
       .catch(() => { setLoading(false) })
   }, [router])
 
-  async function handleAction(userId, action) {
+  async function handleAction(userId, action, orderId) {
     setMsg('')
+    const body = orderId
+      ? { userId, action, adminId: user.id, orderId }
+      : { userId, action, adminId: user.id }
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, action, adminId: user.id })
+      body: JSON.stringify(body)
     })
     const data = await res.json()
     if (!res.ok) { setMsg(data.error); return }
     setMsg(data.message)
+
+    if (action === 'confirm_payment') {
+      setPendingOrders(prev => prev.filter(o => o.id !== orderId))
+      // 刷新用户列表
+      fetch(`/api/admin?adminId=${user.id}`)
+        .then(r => r.json())
+        .then(data => setUsers(data.users || []))
+      return
+    }
 
     const updated = users.map(u =>
       u.id === userId
@@ -57,8 +70,37 @@ export default function AdminPage() {
       {loading ? (
         <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>加载中...</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {users.map(u => (
+        <div className="flex flex-col gap-4">
+          {/* 待确认付款 */}
+          {pendingOrders.filter(o => o.input_data?.status === 'pending').length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--gold-primary)' }}>待确认付款</h3>
+              <div className="flex flex-col gap-2">
+                {pendingOrders.filter(o => o.input_data?.status === 'pending').map(order => (
+                  <div key={order.id} className="rounded-xl p-4 border text-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p style={{ color: 'var(--text-primary)' }} className="font-medium">{order.phone}</p>
+                        <p style={{ color: 'var(--text-secondary)' }} className="text-xs mt-0.5">
+                          {order.input_data?.method === 'wechat' ? '微信支付' : '支付宝'} · {new Date(order.created_at).toLocaleString('zh-CN')}
+                        </p>
+                      </div>
+                      <button onClick={() => handleAction(null, 'confirm_payment', order.id)}
+                        className="text-xs px-4 py-1.5 rounded-full text-white font-medium"
+                        style={{ background: 'var(--gold-primary)' }}>
+                        确认收款
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 用户列表 */}
+          <div>
+            <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>用户管理</h3>
+            {users.map(u => (
             <div key={u.id} className="rounded-xl p-4 border text-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -97,8 +139,9 @@ export default function AdminPage() {
               </div>
             </div>
           ))}
-        </div>
-      )}
+            </div>
+          </div>
+        )}
     </>
   )
 }

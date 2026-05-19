@@ -8,7 +8,7 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, mode, name, surname, babyGender, babyBirthday, requirements } = await req.json()
+    const { userId, mode, name, surname, gender, birthday, babyGender, babyBirthday, requirements } = await req.json()
     if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
     const { data: user } = await supabase
@@ -26,7 +26,7 @@ export async function POST(req) {
     }
 
     const prompt = mode === 'score'
-      ? `请测算姓名：${name}`
+      ? `姓名：${name}\n性别：${gender || '未知'}\n${birthday ? `出生日期：${birthday}\n` : ''}请根据以上信息测算姓名。`
       : `姓氏：${surname}\n宝宝性别：${babyGender || '未知'}\n${babyBirthday ? `宝宝出生日期：${babyBirthday}\n` : ''}${requirements ? `起名要求：${requirements}\n` : ''}请根据以上信息推荐好名字。`
 
     const result = await callDeepSeek(prompt, getXingmingSystemPrompt(mode))
@@ -48,7 +48,7 @@ export async function POST(req) {
       .insert({
         user_id: userId,
         service_type: 'xingming',
-        input_data: { mode, name, surname, babyGender, babyBirthday, requirements },
+        input_data: { mode, name, surname, gender, birthday, babyGender, babyBirthday, requirements },
         result_data: parsed
       })
       .select()

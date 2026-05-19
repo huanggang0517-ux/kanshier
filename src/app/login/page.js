@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [inviteCode, setInviteCode] = useState('')
   const [showReset, setShowReset] = useState(false)
   const [resetPhone, setResetPhone] = useState('')
   const [resetPassword, setResetPassword] = useState('')
@@ -27,7 +28,7 @@ export default function LoginPage() {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, password })
+        body: JSON.stringify({ phone, password, inviteCode })
       })
       const data = await res.json()
 
@@ -84,6 +85,21 @@ export default function LoginPage() {
             }}
           />
 
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="邀请码（选填）"
+              value={inviteCode}
+              onChange={e => setInviteCode(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
+              style={{
+                background: 'var(--bg-card)',
+                borderColor: 'var(--border-color)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          )}
+
           {error && <p className="text-red-500 text-xs">{error}</p>}
 
           <button
@@ -107,7 +123,7 @@ export default function LoginPage() {
         <p className="text-xs text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
           {isLogin ? '没有账号？' : '已有账号？'}
           <button
-            onClick={() => { setIsLogin(!isLogin); setError(''); setShowReset(false) }}
+            onClick={() => { setIsLogin(!isLogin); setError(''); setShowReset(false); setInviteCode('') }}
             className="ml-1 underline"
             style={{ color: 'var(--gold-primary)' }}
           >

@@ -10,6 +10,8 @@ export default function XingmingPage() {
   const [mode, setMode] = useState('score')
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
+  const [gender, setGender] = useState('')
+  const [birthday, setBirthday] = useState('')
   const [babyGender, setBabyGender] = useState('')
   const [babyBirthday, setBabyBirthday] = useState('')
   const [requirements, setRequirements] = useState('')
@@ -35,7 +37,7 @@ export default function XingmingPage() {
       const res = await fetch('/api/xingming', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, mode, name, surname, babyGender, babyBirthday, requirements })
+        body: JSON.stringify({ userId: user.id, mode, name, surname, gender, birthday, babyGender, babyBirthday, requirements })
       })
       const data = await res.json()
 
@@ -83,16 +85,41 @@ export default function XingmingPage() {
       </div>
 
       {mode === 'score' ? (
-        <div>
-          <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>你的姓名</label>
-          <input
-            type="text"
-            placeholder="输入姓名"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
-            style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-          />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>你的姓名</label>
+            <input
+              type="text"
+              placeholder="输入姓名"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>性别</label>
+            <div className="flex gap-3">
+              {['男', '女'].map(g => (
+                <button
+                  key={g}
+                  onClick={() => setGender(g)}
+                  className="flex-1 rounded-xl py-3 text-sm font-medium"
+                  style={{
+                    background: gender === g ? 'var(--gold-primary)' : 'var(--bg-card)',
+                    color: gender === g ? '#fff' : 'var(--text-secondary)',
+                    border: gender === g ? 'none' : '1px solid var(--border-color)'
+                  }}
+                >{g}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>出生日期（可选）</label>
+            <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+          </div>
         </div>
       ) : (
         <div className="flex flex-col gap-4">

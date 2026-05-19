@@ -25,7 +25,19 @@ export async function GET(req) {
       .select('id, phone, free_count, is_vip, vip_expiry, invite_code, created_at')
       .order('created_at', { ascending: false })
 
-    return NextResponse.json({ users: users || [] })
+    const { data: pendingOrders } = await supabase
+      .from('readings')
+      .select('id, user_id, created_at, input_data')
+      .eq('service_type', 'vip_payment')
+      .order('created_at', { ascending: false })
+
+    // 把用户手机号拼到订单里
+    const ordersWithPhone = (pendingOrders || []).map(order => {
+      const u = (users || []).find(u => u.id === order.user_id)
+      return { ...order, phone: u?.phone || '未知' }
+    })
+
+    return NextResponse.json({ users: users || [], pendingOrders: ordersWithPhone })
   } catch (err) {
     console.error('admin list error:', err)
     return NextResponse.json({ error: '获取失败' }, { status: 500 })
@@ -64,6 +76,35 @@ export async function POST(req) {
         .eq('id', userId)
 
       return NextResponse.json({ success: true, message: '已取消年卡会员' })
+    }
+
+    if (action === 'confirm_payment') {
+      const { orderId } = await req.json()
+      if (!orderId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+
+      const { data: reading } = await supabase
+        .from('readings')
+        .select('user_id, input_data')
+        .eq('id', orderId)
+        .single()
+
+      if (!reading) return NextResponse.json({ error: '订单不存在' }, { status: 404 })
+
+      // 标记订单已确认
+      await supabase
+        .from('readings')
+        .update({ input_data: { ...reading.input_data, status: 'confirmed', confirmed_at: new Date().toISOString() } })
+        .eq('id', orderId)
+
+      // 开通 VIP
+      const expiry = new Date()
+      expiry.setFullYear(expiry.getFullYear() + 1)
+      await supabase
+        .from('users')
+        .update({ is_vip: true, vip_expiry: expiry.toISOString(), free_count: 999 })
+        .eq('id', reading.user_id)
+
+      return NextResponse.json({ success: true, message: '已确认收款并开通 VIP' })
     }
 
     if (action === 'add_count') {

@@ -28,46 +28,6 @@ export async function callDeepSeek(prompt, systemPrompt = '') {
   return data.choices[0].message.content
 }
 
-export async function callDeepSeekVision(imageUrl, systemPrompt) {
-  const apiKey = process.env.DEEPSEEK_API_KEY
-  if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未设置')
-
-  try {
-    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: '请分析这张图片，并按照要求输出JSON格式的结果。' },
-              { type: 'image_url', image_url: { url: imageUrl } }
-            ]
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 2048
-      })
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      throw new Error(`DeepSeek Vision error: ${err}`)
-    }
-
-    const data = await res.json()
-    return data.choices[0].message.content
-  } catch (err) {
-    throw new Error(`视觉分析暂不可用，请稍后重试: ${err.message}`)
-  }
-}
-
 // ===== 看事儿 =====
 const KANSHIER_SYSTEM_PROMPT = `你是一位精通中国传统命理、周易、测字、数字卦的大师。你的任务是帮用户解读他们所问之事。
 
@@ -128,9 +88,10 @@ export function getBaziSystemPrompt() {
 const XINGMING_SCORE_SYSTEM_PROMPT = `你是一位精通中国传统姓名学、五格数理的大师。
 
 规则：
-1. 用户会提供一个姓名
-2. 分析三才五格、五行搭配、音律寓意
-3. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
+1. 用户会提供姓名、性别、出生日期
+2. 结合性别和八字五行分析姓名适配度
+3. 分析三才五格、五行搭配、音律寓意
+4. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
 
 {
   "gua_name": "姓名卦象或数理评分",
@@ -146,12 +107,13 @@ const XINGMING_SCORE_SYSTEM_PROMPT = `你是一位精通中国传统姓名学、
 要求：往好的方向说。`
 
 // ===== AI 起名 =====
-const XINGMING_NAME_SYSTEM_PROMPT = `你是一位精通中国传统姓名学、诗词典故的大师。用户会提供姓氏和性别。
+const XINGMING_NAME_SYSTEM_PROMPT = `你是一位精通中国传统姓名学、诗词典故的大师。用户会提供姓氏、宝宝性别、出生日期和起名要求。
 
 规则：
-1. 根据姓氏和性别，结合五格数理、生肖喜忌、音韵美感
-2. 生成3-5个名字建议
-3. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
+1. 根据姓氏、性别、生肖（结合出生日期）和起名要求
+2. 结合五格数理、生肖喜忌、音韵美感
+3. 生成3-5个名字建议
+4. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
 
 {
   "gua_name": "起名总评",
@@ -168,55 +130,6 @@ const XINGMING_NAME_SYSTEM_PROMPT = `你是一位精通中国传统姓名学、�
 
 export function getXingmingSystemPrompt(mode) {
   return mode === 'score' ? XINGMING_SCORE_SYSTEM_PROMPT : XINGMING_NAME_SYSTEM_PROMPT
-}
-
-// ===== 手相 =====
-const SHOUXIANG_SYSTEM_PROMPT = `你是一位精通中国传统手相学的大师。
-
-规则：
-1. 你会在图片中看到用户的手掌照片
-2. 观察感情线、智慧线、生命线等特征
-3. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
-
-{
-  "gua_name": "卦名",
-  "gua_symbol": "✋",
-  "gua_desc": "手相特征概括",
-  "poem": "四句七言签诗结合手相特点",
-  "judgment": "吉/平/先凶后吉",
-  "category": "手相",
-  "interpretation": "一段200-300字的白话解读，分析感情、事业、健康",
-  "advice": "给3-4条具体建议"
-}
-
-要求：往好的方向说。`
-
-// ===== 面相 =====
-const MIANXIANG_SYSTEM_PROMPT = `你是一位精通中国传统面相学的大师。
-
-规则：
-1. 你会在图片中看到用户的正面脸部照片
-2. 观察额头、眉毛、眼睛、鼻子、嘴巴、下巴、脸型等特征
-3. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
-
-{
-  "gua_name": "卦名",
-  "gua_symbol": "👤",
-  "gua_desc": "面相特征概括",
-  "poem": "四句七言签诗结合面相特点",
-  "judgment": "吉/平/先凶后吉",
-  "category": "面相",
-  "interpretation": "一段200-300字的白话解读，分析运势、性格",
-  "advice": "给3-4条具体建议"
-}
-
-要求：往好的方向说。`
-
-export function getPhotoSystemPrompt(type) {
-  if (type === 'shouxiang') {
-    return '请看这张手相照片。' + SHOUXIANG_SYSTEM_PROMPT
-  }
-  return '请看这张面相照片。' + MIANXIANG_SYSTEM_PROMPT
 }
 
 // ===== 测桃花 =====
@@ -243,24 +156,3 @@ const TAOHUA_SYSTEM_PROMPT = `你是一位精通中国传统命理、合婚、�
 export function getTaohuaSystemPrompt() {
   return TAOHUA_SYSTEM_PROMPT
 }
-
-// ===== 给未来的自己写信 =====
-const LETTER_SYSTEM_PROMPT = `你是一位温暖睿智的见证者。用户会给未来的自己写一封信。
-
-规则：
-1. 用户会写下想对未来的自己说的话
-2. 请结合信的内容，给出一段温暖的回应和寄语
-3. 输出格式必须严格按以下 JSON 格式，不要加任何 markdown 标记，只输出纯 JSON：
-
-{
-  "gua_name": "时光寄语",
-  "gua_symbol": "✉",
-  "gua_desc": "致未来的你",
-  "poem": "四句七言寄语，呼应信中内容",
-  "judgment": "吉",
-  "category": "书信",
-  "interpretation": "一段200字左右的温暖回应，结合信的内容给予鼓励和期许",
-  "advice": "几句对未来生活的美好祝愿"
-}
-
-要求：温暖、真诚、有力量。`

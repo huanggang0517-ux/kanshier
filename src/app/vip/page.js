@@ -18,6 +18,15 @@ export default function VipPage() {
   async function handleConfirmPayment() {
     if (!user) { router.push('/login'); return }
     setPaid(true)
+
+    // 提交开通申请到后端，记录用户和支付方式
+    try {
+      await fetch('/api/vip/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, method: payMethod })
+      })
+    } catch {}
   }
 
   return (
@@ -73,10 +82,12 @@ export default function VipPage() {
       </div>
 
       {paid ? (
-        <p className="text-center text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
-          已提交开通申请，管理员确认收款后即会开通。<br />
-          如有问题请联系 <span style={{ color: 'var(--gold-primary)' }}>微信: [你的微信号]</span>
-        </p>
+        <div className="text-center text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
+          <p>已提交开通申请，管理员确认收款后即会开通。</p>
+          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+            付款时请备注手机号 <span style={{ color: 'var(--gold-primary)' }}>{user?.phone}</span>，方便核对
+          </p>
+        </div>
       ) : (
         <button onClick={handleConfirmPayment}
           disabled={!user}
