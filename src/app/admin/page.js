@@ -12,11 +12,14 @@ export default function AdminPage() {
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(true)
 
+  const ADMIN_PHONE = '17614130826'
+
   useEffect(() => {
     const u = getUser()
     if (!u) { router.push('/login'); return }
+    if (u.phone !== ADMIN_PHONE) { router.push('/'); return }
     setUser(u)
-    fetch('/api/admin')
+    fetch(`/api/admin?adminId=${u.id}`)
       .then(r => r.json())
       .then(data => { setUsers(data.users || []); setLoading(false) })
       .catch(() => { setLoading(false) })
@@ -27,7 +30,7 @@ export default function AdminPage() {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, action })
+      body: JSON.stringify({ userId, action, adminId: user.id })
     })
     const data = await res.json()
     if (!res.ok) { setMsg(data.error); return }

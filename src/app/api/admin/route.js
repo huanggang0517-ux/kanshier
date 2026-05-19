@@ -1,10 +1,24 @@
 import { getSupabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+const ADMIN_PHONE = '17614130826'
+
+async function isAdmin(supabase, userId) {
+  if (!userId) return false
+  const { data } = await supabase.from('users').select('phone').eq('id', userId).single()
+  return data?.phone === ADMIN_PHONE
+}
+
+export async function GET(req) {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
+
+    const { searchParams } = new URL(req.url)
+    const adminId = searchParams.get('adminId')
+    if (!(await isAdmin(supabase, adminId))) {
+      return NextResponse.json({ error: '无权限' }, { status: 403 })
+    }
 
     const { data: users } = await supabase
       .from('users')
@@ -23,9 +37,12 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, action } = await req.json()
+    const { userId, action, adminId } = await req.json()
     if (!userId || !action) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    }
+    if (!(await isAdmin(supabase, adminId))) {
+      return NextResponse.json({ error: '无权限' }, { status: 403 })
     }
 
     if (action === 'set_vip') {
