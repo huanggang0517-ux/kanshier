@@ -8,7 +8,7 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, mode, name, surname, babyGender } = await req.json()
+    const { userId, mode, name, surname, babyGender, babyBirthday, requirements } = await req.json()
     if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
     const { data: user } = await supabase
@@ -20,13 +20,14 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 })
 
     const activeUser = await checkVipExpiry(supabase, user)
-    if (!activeUser.is_vip && activeUser.free_count < 1) {
+
+    if (mode !== 'score' && !activeUser.is_vip && activeUser.free_count < 1) {
       return NextResponse.json({ error: '次数不足，请购买' }, { status: 403 })
     }
 
     const prompt = mode === 'score'
       ? `请测算姓名：${name}`
-      : `姓氏：${surname}\n宝宝性别：${babyGender || '未知'}\n请根据以上信息推荐好名字。`
+      : `姓氏：${surname}\n宝宝性别：${babyGender || '未知'}\n${babyBirthday ? `宝宝出生日期：${babyBirthday}\n` : ''}${requirements ? `起名要求：${requirements}\n` : ''}请根据以上信息推荐好名字。`
 
     const result = await callDeepSeek(prompt, getXingmingSystemPrompt(mode))
 
@@ -38,7 +39,7 @@ export async function POST(req) {
       return NextResponse.json({ error: '解读生成异常' }, { status: 500 })
     }
 
-    if (!activeUser.is_vip) {
+    if (mode !== 'score' && !activeUser.is_vip) {
       await supabase.from('users').update({ free_count: activeUser.free_count - 1 }).eq('id', userId)
     }
 
@@ -47,13 +48,14 @@ export async function POST(req) {
       .insert({
         user_id: userId,
         service_type: 'xingming',
-        input_data: { mode, name, surname, babyGender },
+        input_data: { mode, name, surname, babyGender, babyBirthday, requirements },
         result_data: parsed
       })
       .select()
       .single()
 
-    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1 })
+    const remaining = mode === 'score' ? activeUser.free_count : (activeUser.is_vip ? -1 : activeUser.free_count - 1)
+    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining })
   } catch (err) {
     console.error('xingming error:', err)
     return NextResponse.json({ error: '服务器繁忙' }, { status: 500 })

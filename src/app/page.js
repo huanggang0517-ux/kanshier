@@ -10,7 +10,7 @@ export default function HomePage() {
     { href: '/bazi', icon: '☰', title: '八字精批', price: '¥6.6' },
     { href: '/taohua', icon: '🌺', title: '测桃花', price: '¥6.6' },
     { href: '/letter', icon: '✉', title: '写给明年', price: '¥0.52' },
-    { href: '/xingming', icon: '文', title: '姓名·起名', price: '¥8.8' },
+    { href: '/xingming', icon: '文', title: '姓名·起名', price: '免费 / ¥1.8' },
   ]
 
   return (

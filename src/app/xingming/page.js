@@ -11,6 +11,8 @@ export default function XingmingPage() {
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
   const [babyGender, setBabyGender] = useState('')
+  const [babyBirthday, setBabyBirthday] = useState('')
+  const [requirements, setRequirements] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [user, setUser] = useState(null)
@@ -33,7 +35,7 @@ export default function XingmingPage() {
       const res = await fetch('/api/xingming', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, mode, name, surname, babyGender })
+        body: JSON.stringify({ userId: user.id, mode, name, surname, babyGender, babyBirthday, requirements })
       })
       const data = await res.json()
 
@@ -68,7 +70,7 @@ export default function XingmingPage() {
             color: mode === 'score' ? '#fff' : 'var(--text-secondary)',
             border: mode === 'score' ? 'none' : '1px solid var(--border-color)'
           }}
-        >姓名测算</button>
+        >姓名测算（免费）</button>
         <button
           onClick={() => setMode('name')}
           className="flex-1 py-2 rounded-full text-xs font-medium"
@@ -77,7 +79,7 @@ export default function XingmingPage() {
             color: mode === 'name' ? '#fff' : 'var(--text-secondary)',
             border: mode === 'name' ? 'none' : '1px solid var(--border-color)'
           }}
-        >AI 起名</button>
+        >宝贝起名（¥1.8）</button>
       </div>
 
       {mode === 'score' ? (
@@ -122,6 +124,18 @@ export default function XingmingPage() {
               ))}
             </div>
           </div>
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>宝宝出生日期（可选）</label>
+            <input type="date" value={babyBirthday} onChange={e => setBabyBirthday(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>起名要求（可选）</label>
+            <textarea placeholder="例如：希望名字带寓意好、五行互补..." value={requirements} onChange={e => setRequirements(e.target.value)}
+              className="w-full rounded-xl p-3 text-sm outline-none border resize-none h-20"
+              style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+          </div>
         </div>
       )}
 
@@ -133,7 +147,7 @@ export default function XingmingPage() {
         className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-8"
         style={{ background: 'var(--gold-primary)' }}
       >
-        {loading ? '测算中...' : mode === 'score' ? '开始测算 · ¥8.8' : '开始起名 · ¥8.8'}
+        {loading ? '处理中...' : mode === 'score' ? '免费测算' : '开始起名 · ¥1.8'}
       </button>
     </>
   )
