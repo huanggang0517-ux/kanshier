@@ -7,11 +7,6 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const openmaicBaseUrl = process.env.OPENMAIC_BASE_URL
-    if (!openmaicBaseUrl) {
-      return NextResponse.json({ error: '智慧速课服务未配置' }, { status: 500 })
-    }
-
     const { userId, requirement } = await req.json()
 
     if (!requirement || !userId) {
@@ -41,45 +36,51 @@ export async function POST(req) {
         .eq('id', userId)
     }
 
-    const openmaicRes = await fetch(`${openmaicBaseUrl}/api/generate-classroom`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requirement }),
-    })
-
-    if (!openmaicRes.ok) {
-      const errText = await openmaicRes.text()
-      if (!activeUser.is_vip) {
-        await supabase
-          .from('users')
-          .update({ free_count: activeUser.free_count })
-          .eq('id', userId)
+    // 通过 proxy 调用 OpenMAIC（kanshier.top 可被 Vercel 函数访问）
+    let openmaicData
+    try {
+      const proxyUrl = `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom`
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requirement }),
+      })
+      if (!res.ok) {
+        throw new Error(`OpenMAIC proxy returned ${res.status}`)
       }
-      return NextResponse.json({ error: `课程生成服务异常: ${openmaicRes.status}` }, { status: 502 })
+      openmaicData = await res.json()
+    } catch (e) {
+      // OpenMAIC 不可达，回滚次数
+      if (!activeUser.is_vip) {
+        await supabase.from('users').update({ free_count: activeUser.free_count }).eq('id', userId)
+      }
+      return NextResponse.json({ error: `课程生成服务不可达: ${e.message}` }, { status: 502 })
     }
 
-    const data = await openmaicRes.json()
-
-    const { data: reading } = await supabase
+    const { data: reading, error: readingErr } = await supabase
       .from('readings')
       .insert({
         user_id: userId,
         service_type: 'zhihuisuke',
-        input_data: { requirement, openmaic_job_id: data.jobId },
-        result_data: { status: 'generating', step: data.step, progress: data.progress },
+        input_data: { requirement, openmaic_job_id: openmaicData.jobId },
+        result_data: { status: 'generating', step: openmaicData.step, progress: openmaicData.progress },
       })
       .select()
       .single()
 
+    if (readingErr) {
+      return NextResponse.json({ error: '记录保存失败' }, { status: 500 })
+    }
+
     return NextResponse.json({
       success: true,
-      jobId: data.jobId,
+      jobId: openmaicData.jobId,
       courseRecordId: reading.id,
-      pollUrl: `/api/zhihuisuke/status/${data.jobId}?record_id=${reading.id}`,
+      pollUrl: `/api/zhihuisuke/status/${openmaicData.jobId}?record_id=${reading.id}`,
       remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1,
     })
   } catch (err) {
-    console.error('zhihuisuke generate error:', err)
+    console.error('zhihuisuke generate error:', err.message)
     return NextResponse.json({ error: '服务器繁忙，请稍后重试' }, { status: 500 })
   }
 }
