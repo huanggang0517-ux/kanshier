@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUser } from '@/lib/utils'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 
 export default function LetterReminder() {
   const router = useRouter()
@@ -39,36 +41,36 @@ export default function LetterReminder() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ animation: 'fadeIn 0.3s' }}>
-      <div
-        className="relative mx-4 w-full max-w-sm rounded-2xl p-8 text-center shadow-xl border"
-        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
-      >
-        <div className="text-5xl mb-4 animate-bounce">📬</div>
-        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+    <div
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center"
+      style={{ background: 'var(--bg-overlay)', animation: 'fadeIn 0.3s' }}
+    >
+      <Card variant="glass" elevation="lg" decorations={{ corners: false, innerBorder: false }} className="mx-4 w-full max-w-sm text-center">
+        <div className="text-5xl mb-4" style={{ animation: 'taiji-float 3s ease-in-out infinite' }}>📬</div>
+        <h3 className="text-lg font-semibold mb-2 font-serif tracking-wider" style={{ color: 'var(--text-primary)' }}>
           你有一封来信
         </h3>
-        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-sm mb-6 font-serif" style={{ color: 'var(--text-secondary)' }}>
           来自 {new Date(letter.created_at).getFullYear()} 年的自己<br />
           已经到了开启的时候了
         </p>
         <div className="flex gap-3">
-          <button
+          <Button
+            variant="outline"
+            fullWidth
             onClick={() => setDismissed(true)}
-            className="flex-1 rounded-xl py-2.5 text-sm border"
-            style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}
           >
             稍后
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="gold"
+            fullWidth
             onClick={handleOpen}
-            className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white"
-            style={{ background: 'var(--gold-primary)' }}
           >
             开启
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

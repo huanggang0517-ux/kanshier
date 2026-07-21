@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import PageNav from '@/components/ui/PageNav'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import { getUser } from '@/lib/utils'
 
 export default function VipPage() {
@@ -19,7 +22,6 @@ export default function VipPage() {
     if (!user) { router.push('/login'); return }
     setPaid(true)
 
-    // 提交开通申请到后端，记录用户和支付方式
     try {
       await fetch('/api/vip/apply', {
         method: 'POST',
@@ -32,76 +34,86 @@ export default function VipPage() {
   return (
     <>
       <Header />
-      <div className="flex items-center gap-3 py-2 border-b mb-6" style={{ borderColor: 'var(--border-color)' }}>
-        <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>年卡会员</span>
-      </div>
+      <PageNav title="年卡会员" />
 
       <div className="text-center py-6">
-        <div className="text-4xl mb-4">👑</div>
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>年卡会员</h2>
-        <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>全部服务无限次使用 · 一年有效</p>
+        <div className="text-4xl mb-4" style={{ filter: 'drop-shadow(0 2px 8px rgba(184,148,79,0.3))' }}>👑</div>
+        <h2 className="text-xl font-semibold font-serif tracking-wider" style={{ color: 'var(--text-primary)' }}>
+          年卡会员
+        </h2>
+        <p className="text-xs mt-2 font-serif" style={{ color: 'var(--text-secondary)' }}>
+          全部服务无限次使用 · 一年有效
+        </p>
       </div>
 
-      <div className="rounded-2xl p-6 mb-6 border text-center"
-        style={{ background: 'var(--gradient-card)', borderColor: 'var(--border-color)' }}>
-        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>限时特惠</div>
-        <div className="text-4xl font-bold my-3" style={{ color: 'var(--gold-primary)' }}>
-          ¥18.8
-          <span className="text-base font-normal" style={{ color: 'var(--text-secondary)' }}>/年</span>
+      <Card variant="parchment" elevation="md" decorations={{ corners: true, innerBorder: true }}>
+        <div className="text-center">
+          <div className="text-xs font-serif tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+            限时特惠
+          </div>
+          <div className="text-4xl font-bold my-3 font-serif" style={{ color: 'var(--color-primary)' }}>
+            ¥18.8
+            <span className="text-base font-normal" style={{ color: 'var(--text-secondary)' }}>/年</span>
+          </div>
+          <div className="text-xs leading-relaxed font-serif" style={{ color: 'var(--text-secondary)' }}>
+            看事儿 · 八字精批 · 测桃花 · AI起名 · 写给明年<br />
+            全部无限次使用
+          </div>
         </div>
-        <div className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          八字精批 · 测桃花 · AI起名 · 写给明年<br />
-          全部无限次使用
-        </div>
-      </div>
+      </Card>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 my-4">
         {['wechat', 'alipay'].map(m => (
           <button key={m} onClick={() => setPayMethod(m)}
-            className="flex-1 py-3 rounded-xl text-sm font-medium"
+            className="flex-1 py-3 text-sm font-medium transition-all"
             style={{
-              background: payMethod === m ? 'var(--gold-primary)' : 'var(--bg-card)',
+              background: payMethod === m ? 'var(--color-primary)' : 'var(--bg-card)',
               color: payMethod === m ? '#fff' : 'var(--text-secondary)',
-              border: payMethod === m ? 'none' : '1px solid var(--border-color)'
+              border: payMethod === m ? 'none' : '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
             }}>
             {m === 'wechat' ? '微信支付' : '支付宝'}
           </button>
         ))}
       </div>
 
-      <div className="rounded-xl p-6 border text-center"
-        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-        <img src={`/${payMethod}-pay.jpg`} alt={`${payMethod}收款码`}
-          className="w-48 h-48 mx-auto mb-3 rounded-lg"
-          onError={e => { e.target.style.display = 'none' }} />
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          打开{payMethod === 'wechat' ? '微信' : '支付宝'}扫一扫付款<br />
-          付款后点击下方按钮申请开通
-        </p>
-      </div>
+      <Card variant="parchment" elevation="sm" decorations={{ corners: false, innerBorder: false }}>
+        <div className="text-center">
+          <img src={`/${payMethod}-pay.jpg`} alt={`${payMethod}收款码`}
+            className="w-48 h-48 mx-auto mb-3 rounded-lg"
+            style={{ borderRadius: 'var(--radius-md)' }}
+            onError={e => { e.target.style.display = 'none' }} />
+          <p className="text-xs font-serif" style={{ color: 'var(--text-secondary)' }}>
+            打开{payMethod === 'wechat' ? '微信' : '支付宝'}扫一扫付款<br />
+            付款后点击下方按钮申请开通
+          </p>
+        </div>
+      </Card>
 
       {paid ? (
         <div className="text-center text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
           <p>已提交开通申请，管理员确认收款后即会开通。</p>
           <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-            付款时请备注手机号 <span style={{ color: 'var(--gold-primary)' }}>{user?.phone}</span>，方便核对
+            付款时请备注手机号 <span style={{ color: 'var(--color-primary)' }}>{user?.phone}</span>，方便核对
           </p>
         </div>
       ) : (
-        <button onClick={handleConfirmPayment}
+        <Button
+          fullWidth
+          size="lg"
           disabled={!user}
-          className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-4"
-          style={{ background: 'var(--gold-primary)' }}>
+          onClick={handleConfirmPayment}
+          className="mt-4"
+        >
           {user ? '我已付款，申请开通' : '请先登录'}
-        </button>
+        </Button>
       )}
 
       <div className="flex flex-col gap-3 mt-6 mb-8">
         {['看事儿（三字测吉凶）', '八字精批', '测桃花', '姓名·起名', '写给明年'].map(s => (
           <div key={s} className="flex justify-between items-center text-sm px-2" style={{ color: 'var(--text-primary)' }}>
-            <span>{s}</span>
-            <span style={{ color: 'var(--gold-primary)' }}>无限次</span>
+            <span className="font-serif">{s}</span>
+            <span className="font-serif" style={{ color: 'var(--color-primary)' }}>无限次</span>
           </div>
         ))}
       </div>

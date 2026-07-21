@@ -13,20 +13,45 @@ export default function Header() {
   }, [])
 
   return (
-    <div className="flex justify-between items-center py-2 px-0">
-      <Link href="/" className="text-lg font-semibold tracking-widest" style={{ color: 'var(--gold-primary)' }}>
-        玄机
+    <header className="flex items-center justify-between py-3">
+      <Link href="/" className="flex items-center gap-2 group">
+        <span
+          className="font-serif text-lg font-bold tracking-widest transition-colors"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          玄机
+        </span>
+        <span
+          className="text-[10px] font-serif tracking-wider transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          看事儿
+        </span>
       </Link>
-      <div className="flex items-center gap-3">
+      <nav className="flex items-center gap-4">
+        <Link
+          href="/manifest"
+          className="font-serif text-xs tracking-widest transition-all hover:opacity-70"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          著
+        </Link>
+        <Link
+          href="/zhihuisuke"
+          className="font-serif text-xs tracking-widest transition-all hover:opacity-70"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          课
+        </Link>
         <Link
           href={user ? '/profile' : '/login'}
-          className="text-xs"
-          style={{ color: 'var(--text-secondary)' }}
+          className="font-serif text-xs tracking-wider transition-all hover:opacity-70"
+          style={{ color: 'var(--text-muted)' }}
         >
           {user ? '我的' : '登录'}
         </Link>
         <ThemeToggle />
-      </div>
-    </div>
+      </nav>
+    </header>
   )
 }

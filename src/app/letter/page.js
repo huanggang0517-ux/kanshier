@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import PageNav from '@/components/ui/PageNav'
+import Button from '@/components/ui/Button'
+import InkInput from '@/components/ui/InkInput'
 import { getUser } from '@/lib/utils'
 
 export default function LetterPage() {
@@ -51,18 +54,22 @@ export default function LetterPage() {
   return (
     <>
       <Header />
-      <div className="flex items-center gap-3 py-2 border-b mb-6" style={{ borderColor: 'var(--border-color)' }}>
-        <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>写给明年</span>
-      </div>
+      <PageNav title="写给明年" />
 
       <div className="flex flex-col gap-3 mb-4">
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>写一段话给明年的自己，到日子了会提醒你回来打开</p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          写一段话给明年的自己，到日子了会提醒你回来打开
+        </p>
         <div className="flex flex-wrap gap-2">
           {prompts.map((p, i) => (
             <button key={i} onClick={() => setContent(prev => prev + p + '\n')}
-              className="text-xs px-3 py-1.5 rounded-full border"
-              style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-color)', background: 'var(--bg-card)' }}>
+              className="text-xs px-3 py-1.5 transition-colors hover:opacity-70"
+              style={{
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                borderRadius: 'var(--radius-pill)',
+              }}>
               {p}
             </button>
           ))}
@@ -73,26 +80,54 @@ export default function LetterPage() {
         placeholder="亲爱的未来的我⋯⋯"
         value={content}
         onChange={e => setContent(e.target.value)}
-        className="w-full rounded-xl p-4 text-sm outline-none border resize-none h-48 leading-relaxed"
-        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+        className="w-full resize-none h-48 leading-relaxed"
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--text-primary)',
+          padding: '16px',
+          fontSize: 14,
+          outline: 'none',
+        }}
+        onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+        onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
         maxLength={2000}
       />
       <div className="text-right text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{content.length}/2000</div>
 
       <div className="mt-4">
-        <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>希望什么时候回看？（可选）</label>
+        <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-primary)' }}>
+          希望什么时候回看？（可选）
+        </label>
         <input type="date" value={futureDate} onChange={e => setFutureDate(e.target.value)}
-          className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+          className="w-full outline-none"
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
+            padding: '12px 16px',
+            fontSize: 14,
+          }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }} />
       </div>
 
-      {error && <p className="text-red-500 text-xs text-center mt-4">{error}</p>}
+      {error && (
+        <p className="text-xs text-center mt-4" style={{ color: 'var(--color-error)' }}>{error}</p>
+      )}
 
-      <button onClick={handleSubmit} disabled={loading}
-        className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50 mt-6"
-        style={{ background: 'var(--gold-primary)' }}>
+      <Button
+        fullWidth
+        size="lg"
+        loading={loading}
+        disabled={loading}
+        onClick={handleSubmit}
+        className="mt-6"
+      >
         {loading ? '寄送中...' : '寄给未来 · ¥0.52'}
-      </button>
+      </Button>
     </>
   )
 }

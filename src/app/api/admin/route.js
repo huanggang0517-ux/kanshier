@@ -22,22 +22,32 @@ export async function GET(req) {
 
     const { data: users } = await supabase
       .from('users')
-      .select('id, phone, free_count, is_vip, vip_expiry, invite_code, created_at')
+      .select('id, phone, free_count, is_vip, vip_expiry, invite_code, created_at, ebook_access')
       .order('created_at', { ascending: false })
 
-    const { data: pendingOrders } = await supabase
+    const { data: vipOrders } = await supabase
       .from('readings')
       .select('id, user_id, created_at, input_data')
       .eq('service_type', 'vip_payment')
       .order('created_at', { ascending: false })
 
+    const { data: ebookOrders } = await supabase
+      .from('readings')
+      .select('id, user_id, created_at, input_data')
+      .eq('service_type', 'ebook_payment')
+      .order('created_at', { ascending: false })
+
     // 把用户手机号拼到订单里
-    const ordersWithPhone = (pendingOrders || []).map(order => {
+    const attachPhone = orders => (orders || []).map(order => {
       const u = (users || []).find(u => u.id === order.user_id)
       return { ...order, phone: u?.phone || '未知' }
     })
 
-    return NextResponse.json({ users: users || [], pendingOrders: ordersWithPhone })
+    return NextResponse.json({
+      users: users || [],
+      pendingOrders: attachPhone(vipOrders),
+      ebookOrders: attachPhone(ebookOrders),
+    })
   } catch (err) {
     console.error('admin list error:', err)
     return NextResponse.json({ error: '获取失败' }, { status: 500 })
@@ -49,8 +59,8 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, action, adminId } = await req.json()
-    if (!userId || !action) {
+    const { userId, action, adminId, orderId } = await req.json()
+    if (!action) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
     }
     if (!(await isAdmin(supabase, adminId))) {
@@ -58,6 +68,7 @@ export async function POST(req) {
     }
 
     if (action === 'set_vip') {
+      if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
       const expiry = new Date()
       expiry.setFullYear(expiry.getFullYear() + 1)
 
@@ -70,6 +81,7 @@ export async function POST(req) {
     }
 
     if (action === 'remove_vip') {
+      if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
       await supabase
         .from('users')
         .update({ is_vip: false, vip_expiry: null, free_count: 0 })
@@ -79,7 +91,6 @@ export async function POST(req) {
     }
 
     if (action === 'confirm_payment') {
-      const { orderId } = await req.json()
       if (!orderId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
 
       const { data: reading } = await supabase
@@ -107,7 +118,32 @@ export async function POST(req) {
       return NextResponse.json({ success: true, message: '已确认收款并开通 VIP' })
     }
 
+    if (action === 'confirm_ebook_payment') {
+      if (!orderId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+
+      const { data: reading } = await supabase
+        .from('readings')
+        .select('user_id, input_data')
+        .eq('id', orderId)
+        .single()
+
+      if (!reading) return NextResponse.json({ error: '订单不存在' }, { status: 404 })
+
+      await supabase
+        .from('readings')
+        .update({ input_data: { ...reading.input_data, status: 'confirmed', confirmed_at: new Date().toISOString() } })
+        .eq('id', orderId)
+
+      await supabase
+        .from('users')
+        .update({ ebook_access: true })
+        .eq('id', reading.user_id)
+
+      return NextResponse.json({ success: true, message: '已确认收款并开通书籍库' })
+    }
+
     if (action === 'add_count') {
+      if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
       const { data: user } = await supabase
         .from('users')
         .select('free_count')

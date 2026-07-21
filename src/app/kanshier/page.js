@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import PageNav from '@/components/ui/PageNav'
+import GoldBadge from '@/components/ui/GoldBadge'
+import Button from '@/components/ui/Button'
+import InkInput from '@/components/ui/InkInput'
 import { getUser } from '@/lib/utils'
 
 export default function KanshierPage() {
@@ -94,29 +98,38 @@ export default function KanshierPage() {
   return (
     <>
       <Header />
-      <div className="flex items-center gap-3 py-2 border-b mb-6" style={{ borderColor: 'var(--border-color)' }}>
-        <button onClick={() => router.back()} style={{ color: 'var(--text-secondary)', fontSize: 18 }}>←</button>
-        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>看事儿</span>
-        <span className="text-xs ml-auto" style={{ color: 'var(--text-secondary)' }}>
-          剩余 <span style={{ color: 'var(--gold-primary)' }}>{remaining}</span> 次
-        </span>
-      </div>
+      <PageNav
+        title="看事儿"
+        right={
+          <span className="text-xs font-serif" style={{ color: 'var(--text-secondary)' }}>
+            剩余 <span style={{ color: 'var(--color-primary)' }}>{remaining}</span> 次
+          </span>
+        }
+      />
 
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-white text-xs w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--gold-primary)' }}>1</span>
-          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>你想问什么事？</span>
+          <GoldBadge>1</GoldBadge>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            你想问什么事？
+          </span>
         </div>
         <textarea
           placeholder="例如：昨晚梦见一条黑狗追我，不知道是吉是凶..."
           value={question}
           onChange={e => setQuestion(e.target.value)}
-          className="w-full rounded-xl p-3 text-sm outline-none border resize-none h-20"
+          className="w-full resize-none h-20 leading-relaxed"
           style={{
             background: 'var(--bg-card)',
-            borderColor: 'var(--border-color)',
-            color: 'var(--text-primary)'
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
+            padding: '12px 16px',
+            fontSize: 14,
+            outline: 'none',
           }}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
           maxLength={500}
         />
         <div className="text-right text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{question.length}/500</div>
@@ -124,27 +137,31 @@ export default function KanshierPage() {
 
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-white text-xs w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--gold-primary)' }}>2</span>
-          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>给三个字 或 三个数字</span>
+          <GoldBadge>2</GoldBadge>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            给三个字 或 三个数字
+          </span>
         </div>
 
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setInputType('char')}
-            className="px-4 py-1.5 rounded-full text-xs font-medium transition-colors"
+            className="px-4 py-1.5 text-xs font-medium transition-all"
             style={{
-              background: inputType === 'char' ? 'var(--gold-primary)' : 'var(--bg-card)',
+              background: inputType === 'char' ? 'var(--color-primary)' : 'var(--bg-card)',
               color: inputType === 'char' ? '#fff' : 'var(--text-secondary)',
-              border: inputType === 'char' ? 'none' : '1px solid var(--border-color)'
+              border: inputType === 'char' ? 'none' : '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-pill)',
             }}
           >测字</button>
           <button
             onClick={() => setInputType('number')}
-            className="px-4 py-1.5 rounded-full text-xs font-medium transition-colors"
+            className="px-4 py-1.5 text-xs font-medium transition-all"
             style={{
-              background: inputType === 'number' ? 'var(--gold-primary)' : 'var(--bg-card)',
+              background: inputType === 'number' ? 'var(--color-primary)' : 'var(--bg-card)',
               color: inputType === 'number' ? '#fff' : 'var(--text-secondary)',
-              border: inputType === 'number' ? 'none' : '1px solid var(--border-color)'
+              border: inputType === 'number' ? 'none' : '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-pill)',
             }}
           >数字</button>
         </div>
@@ -159,11 +176,12 @@ export default function KanshierPage() {
                 maxLength={1}
                 value={chars[i]}
                 onChange={e => handleCharChange(i, e.target.value)}
-                className="w-16 h-16 text-center text-xl rounded-xl border outline-none"
+                className="w-16 h-16 text-center text-xl outline-none"
                 style={{
                   background: 'var(--bg-card)',
-                  borderColor: i === 0 && !chars[0] ? 'var(--gold-primary)' : 'var(--border-color)',
-                  color: 'var(--text-primary)'
+                  border: `1px solid ${i === 0 && !chars[0] ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                  color: 'var(--text-primary)',
+                  borderRadius: 'var(--radius-md)',
                 }}
                 placeholder="字"
               />
@@ -175,11 +193,12 @@ export default function KanshierPage() {
                 maxLength={1}
                 value={numbers[i]}
                 onChange={e => handleNumberChange(i, e.target.value)}
-                className="w-16 h-16 text-center text-xl rounded-xl border outline-none"
+                className="w-16 h-16 text-center text-xl outline-none"
                 style={{
                   background: 'var(--bg-card)',
-                  borderColor: i === 0 && !numbers[0] ? 'var(--gold-primary)' : 'var(--border-color)',
-                  color: 'var(--text-primary)'
+                  border: `1px solid ${i === 0 && !numbers[0] ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                  color: 'var(--text-primary)',
+                  borderRadius: 'var(--radius-md)',
                 }}
                 placeholder="0"
               />
@@ -188,16 +207,19 @@ export default function KanshierPage() {
         </div>
       </div>
 
-      {error && <p className="text-red-500 text-xs text-center mb-4">{error}</p>}
+      {error && (
+        <p className="text-xs text-center mb-4" style={{ color: 'var(--color-error)' }}>{error}</p>
+      )}
 
-      <button
-        onClick={handleSubmit}
+      <Button
+        fullWidth
+        size="lg"
+        loading={loading}
         disabled={loading}
-        className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50"
-        style={{ background: 'var(--gold-primary)' }}
+        onClick={handleSubmit}
       >
-        {loading ? '解卦中...' : user?.free_count > 0 || user?.is_vip ? '开始解读' : '开始解读 · ¥8.8'}
-      </button>
+        {user?.free_count > 0 || user?.is_vip ? '开始解读' : '开始解读 · ¥8.8'}
+      </Button>
     </>
   )
 }

@@ -1,6 +1,14 @@
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import LetterReminder from '@/components/LetterReminder'
+import { Noto_Serif_SC } from 'next/font/google'
 import './globals.css'
+
+const notoSerif = Noto_Serif_SC({
+  weight: ['400', '700', '900'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-serif',
+})
 
 export const metadata = {
   title: '玄机 · 看事儿',
@@ -17,9 +25,9 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body>
+      <body className={notoSerif.variable}>
         <ThemeProvider>
-          <div className="container">
+          <div className="app-container">
             {children}
             <LetterReminder />
           </div>

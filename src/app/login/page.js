@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import Button from '@/components/ui/Button'
+import InkInput from '@/components/ui/InkInput'
+import Card from '@/components/ui/Card'
 import { setUser } from '@/lib/utils'
 
 export default function LoginPage() {
@@ -51,10 +54,10 @@ export default function LoginPage() {
     <>
       <Header />
       <div className="pt-12">
-        <h1 className="text-xl font-semibold text-center mb-2" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="text-xl font-semibold text-center mb-2 font-serif tracking-wider" style={{ color: 'var(--text-primary)' }}>
           {isLogin ? '欢迎回来' : '注册'}
         </h1>
-        <p className="text-xs text-center mb-8" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-xs text-center mb-8 font-serif" style={{ color: 'var(--text-secondary)' }}>
           {isLogin ? '输入手机号和密码登录' : '新用户送 6 次免费看事儿'}
         </p>
 
@@ -65,24 +68,36 @@ export default function LoginPage() {
             maxLength={11}
             value={phone}
             onChange={e => setPhone(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
             style={{
               background: 'var(--bg-card)',
-              borderColor: 'var(--border-color)',
-              color: 'var(--text-primary)'
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-primary)',
+              padding: '12px 16px',
+              fontSize: 14,
+              outline: 'none',
+              width: '100%',
             }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
           />
           <input
             type="password"
             placeholder="密码（至少6位）"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
             style={{
               background: 'var(--bg-card)',
-              borderColor: 'var(--border-color)',
-              color: 'var(--text-primary)'
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-primary)',
+              padding: '12px 16px',
+              fontSize: 14,
+              outline: 'none',
+              width: '100%',
             }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
           />
 
           {!isLogin && (
@@ -91,25 +106,26 @@ export default function LoginPage() {
               placeholder="邀请码（选填）"
               value={inviteCode}
               onChange={e => setInviteCode(e.target.value)}
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
               style={{
                 background: 'var(--bg-card)',
-                borderColor: 'var(--border-color)',
-                color: 'var(--text-primary)'
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-primary)',
+                padding: '12px 16px',
+                fontSize: 14,
+                outline: 'none',
+                width: '100%',
               }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }}
             />
           )}
 
-          {error && <p className="text-red-500 text-xs">{error}</p>}
+          {error && <p className="text-xs" style={{ color: 'var(--color-error)' }}>{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-50"
-            style={{ background: 'var(--gold-primary)' }}
-          >
+          <Button type="submit" fullWidth size="lg" loading={loading} disabled={loading}>
             {loading ? '处理中...' : isLogin ? '登录' : '注册'}
-          </button>
+          </Button>
         </form>
 
         {isLogin && (
@@ -125,26 +141,51 @@ export default function LoginPage() {
           <button
             onClick={() => { setIsLogin(!isLogin); setError(''); setShowReset(false); setInviteCode('') }}
             className="ml-1 underline"
-            style={{ color: 'var(--gold-primary)' }}
+            style={{ color: 'var(--color-primary)' }}
           >
             {isLogin ? '注册' : '登录'}
           </button>
         </p>
 
         {showReset && (
-          <div className="mt-6 rounded-xl p-4 border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-            <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>重置密码</h3>
+          <Card variant="parchment" elevation="sm" decorations={{ corners: false, innerBorder: false }} className="mt-6">
+            <h3 className="text-sm font-medium mb-3 font-serif" style={{ color: 'var(--text-primary)' }}>重置密码</h3>
             <div className="flex flex-col gap-3">
               <input type="tel" placeholder="手机号" maxLength={11} value={resetPhone}
                 onChange={e => setResetPhone(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
-                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--text-primary)',
+                  padding: '12px 16px',
+                  fontSize: 14,
+                  outline: 'none',
+                  width: '100%',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }} />
               <input type="password" placeholder="新密码（至少6位）" value={resetPassword}
                 onChange={e => setResetPassword(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none border"
-                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
-              {resetMsg && <p className={`text-xs ${resetMsg.includes('成功') ? 'text-green-500' : 'text-red-500'}`}>{resetMsg}</p>}
-              <button onClick={async () => {
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--text-primary)',
+                  padding: '12px 16px',
+                  fontSize: 14,
+                  outline: 'none',
+                  width: '100%',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }} />
+              {resetMsg && (
+                <p className={`text-xs ${resetMsg.includes('成功') ? '' : ''}`}
+                  style={{ color: resetMsg.includes('成功') ? 'var(--color-success)' : 'var(--color-error)' }}>
+                  {resetMsg}
+                </p>
+              )}
+              <Button fullWidth variant="gold" onClick={async () => {
                 if (!resetPhone || !resetPassword) { setResetMsg('请填写完整'); return }
                 if (resetPassword.length < 6) { setResetMsg('密码至少6位'); return }
                 try {
@@ -159,12 +200,11 @@ export default function LoginPage() {
                   setResetPassword('')
                   setTimeout(() => setShowReset(false), 2000)
                 } catch { setResetMsg('网络错误') }
-              }} className="w-full rounded-xl py-2.5 text-sm font-semibold text-white"
-                style={{ background: 'var(--gold-primary)' }}>
+              }}>
                 重置密码
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </>
