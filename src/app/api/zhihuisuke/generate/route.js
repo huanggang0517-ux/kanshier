@@ -36,17 +36,19 @@ export async function POST(req) {
         .eq('id', userId)
     }
 
-    // 通过 proxy 调用 OpenMAIC（kanshier.top 可被 Vercel 函数访问）
     let openmaicData
     try {
-      const proxyUrl = `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom`
-      const res = await fetch(proxyUrl, {
+      // OPENMAIC_BASE_URL 优先（本地开发/自建部署），否则走 Vercel rewrite proxy
+      const openmaicUrl = process.env.OPENMAIC_BASE_URL
+        ? `${process.env.OPENMAIC_BASE_URL}/api/generate-classroom`
+        : `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom`
+      const res = await fetch(openmaicUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ requirement }),
       })
       if (!res.ok) {
-        throw new Error(`OpenMAIC proxy returned ${res.status}`)
+        throw new Error(`OpenMAIC returned ${res.status}`)
       }
       openmaicData = await res.json()
     } catch (e) {

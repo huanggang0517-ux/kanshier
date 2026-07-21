@@ -23,9 +23,11 @@ export async function GET(req, { params }) {
       }
     }
 
-    // Supabase 无数据则通过 proxy 轮询 OpenMAIC
-    const proxyUrl = `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom/${jobId}`
-    const openmaicRes = await fetch(proxyUrl, { cache: 'no-store' })
+    // Supabase 无数据则轮询 OpenMAIC（优先本地 URL）
+    const openmaicUrl = process.env.OPENMAIC_BASE_URL
+      ? `${process.env.OPENMAIC_BASE_URL}/api/generate-classroom/${jobId}`
+      : `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom/${jobId}`
+    const openmaicRes = await fetch(openmaicUrl, { cache: 'no-store' })
 
     if (!openmaicRes.ok) {
       return NextResponse.json({ error: '无法获取生成状态' }, { status: openmaicRes.status })
