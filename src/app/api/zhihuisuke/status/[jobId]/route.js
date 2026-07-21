@@ -6,17 +6,26 @@ export async function GET(req, { params }) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const openmaicBaseUrl = process.env.OPENMAIC_BASE_URL
-    if (!openmaicBaseUrl) {
-      return NextResponse.json({ error: '智慧速课服务未配置' }, { status: 500 })
-    }
-
     const { jobId } = await params
     const recordId = req.nextUrl.searchParams.get('record_id')
 
-    const openmaicRes = await fetch(`${openmaicBaseUrl}/api/generate-classroom/${jobId}`, {
-      cache: 'no-store',
-    })
+    // 先尝试从 Supabase 读取（webhook 持续同步中）
+    if (recordId) {
+      const { data: record } = await supabase
+        .from('readings')
+        .select('result_data')
+        .eq('id', recordId)
+        .single()
+
+      const rd = record?.result_data
+      if (rd?.status === 'succeeded' || rd?.status === 'failed') {
+        return NextResponse.json(rd)
+      }
+    }
+
+    // 未完成则通过 proxy 轮询 OpenMAIC
+    const proxyUrl = `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom/${jobId}`
+    const openmaicRes = await fetch(proxyUrl, { cache: 'no-store' })
 
     if (!openmaicRes.ok) {
       return NextResponse.json({ error: '无法获取生成状态' }, { status: openmaicRes.status })
@@ -41,11 +50,11 @@ export async function GET(req, { params }) {
               status: data.status,
               step: data.step,
               progress: data.progress,
-              classroom_id: data.result?.id,
+              classroom_id: data.result?.classroomId,
               classroom_url: data.result?.url,
+              scenes_count: data.result?.scenesCount,
               message: data.message,
               error: data.error,
-              title: data.result?.stage?.title,
             },
           })
           .eq('id', recordId)
