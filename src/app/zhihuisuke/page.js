@@ -267,7 +267,7 @@ export default function ZhihuisukePage() {
                   {course.status === 'failed' && (
                     <span className="text-xs flex-shrink-0" style={{ color: 'var(--color-error)' }}>失败</span>
                   )}
-                  {course.status === 'generating' && (
+                  {(course.status === 'generating' || course.status === 'running' || course.status === 'pending') && (
                     <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>生成中</span>
                   )}
                 </div>
@@ -287,6 +287,6 @@ function formatDate(dateStr) {
 }
 
 function statusLabel(status) {
-  const map = { succeeded: '已完成', failed: '失败', generating: '生成中', unknown: '未知' }
+  const map = { succeeded: '已完成', failed: '失败', generating: '生成中', running: '生成中', pending: '排队中', unknown: '未知' }
   return map[status] || status
 }
