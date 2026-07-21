@@ -28,7 +28,9 @@ export async function POST(req) {
       updateData.result_data.classroom_url = result.url
     }
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/readings?openmaic_job_id=eq.${encodeURIComponent(jobId)}`, {
+    // openmaic_job_id 存在 input_data (JSONB) 字段中
+    const jsonPath = `input_data->>openmaic_job_id`
+    const res = await fetch(`${supabaseUrl}/rest/v1/readings?${jsonPath}=eq.${encodeURIComponent(jobId)}`, {
       method: 'PATCH',
       headers: {
         'apikey': serviceKey,
