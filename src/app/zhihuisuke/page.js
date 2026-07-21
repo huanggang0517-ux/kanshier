@@ -69,6 +69,11 @@ export default function ZhihuisukePage() {
         return
       }
 
+      // 更新剩余次数
+      if (data.remaining !== undefined) {
+        setUser(prev => ({ ...prev, free_count: Math.max(0, data.remaining) }))
+      }
+
       setStatusMsg('正在生成课程内容，请稍候...')
       setProgress(10)
 
@@ -82,16 +87,16 @@ export default function ZhihuisukePage() {
           const statusRes = await fetch(`/api/zhihuisuke/status/${pollId}?record_id=${recordId}`)
           const status = await statusRes.json()
 
-          if (status.progress) setProgress(Math.round(status.progress * 100))
+          if (status.progress) setProgress(Math.round(status.progress))
           if (status.message) setStatusMsg(status.message)
 
           if (status.status === 'succeeded' || status.done === true) {
             setProgress(100)
             setStatusMsg('课程生成完成！')
             setDoneCourse({
-              id: status.result?.id,
-              url: status.result?.url,
-              title: status.result?.stage?.title || requirement.trim(),
+              id: status.result?.classroomId || (status.classroom_url || '').split('/').pop(),
+              url: status.classroom_url || status.result?.url,
+              title: requirement.trim(),
             })
             setGenerating(false)
             loadCourses()
