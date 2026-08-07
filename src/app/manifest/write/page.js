@@ -6,7 +6,7 @@ import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import { createCanvasState, startStroke, moveStroke, endStroke } from '@/lib/manifest/brush'
 
 function WriteCanvas() {
@@ -14,7 +14,7 @@ function WriteCanvas() {
   const searchParams = useSearchParams()
   const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
 
-  const [user, setUser] = useState(null)
+  const { user, loading: authLoading } = useAuth()
   const [phase, setPhase] = useState('loading')
   const [entryId, setEntryId] = useState(null)
   const [hiddenMsg, setHiddenMsg] = useState('')
@@ -28,14 +28,12 @@ function WriteCanvas() {
   const wrapRef = useRef(null)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) { router.replace('/login'); return }
-    setUser(u)
-  }, [router])
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
 
   // 检查该日期是否已有著定
   useEffect(() => {
-    if (!user) return
+    if (authLoading || !user) return
 
     // 未来日期不可写
     const today = new Date().toISOString().split('T')[0]
@@ -45,7 +43,7 @@ function WriteCanvas() {
       return
     }
 
-    fetch(`/api/manifest?user_id=${user.id}&year=${date.slice(0, 4)}`)
+    fetch(`/api/manifest?year=${date.slice(0, 4)}`)
       .then(r => r.json())
       .then(data => {
         const found = (data.entries || []).find(e => e.date === date)
@@ -62,7 +60,7 @@ function WriteCanvas() {
         }
       })
       .catch(() => setPhase('writing'))
-  }, [user, date])
+  }, [authLoading, user, date])
 
   const getPos = useCallback((e) => {
     const canvas = canvasRef.current
@@ -127,7 +125,7 @@ function WriteCanvas() {
       const res = await fetch('/api/manifest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, date, strokeData, mood })
+        body: JSON.stringify({ date, strokeData, mood })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -158,7 +156,7 @@ function WriteCanvas() {
       await fetch('/api/manifest', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entryId, hiddenMessage: hiddenMsg })
+        body: JSON.stringify({ entryId, hiddenMessage: hiddenMsg, mood })
       })
     } catch {}
     goToGrid()

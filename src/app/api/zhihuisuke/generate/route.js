@@ -1,39 +1,31 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
-import { checkVipExpiry } from '@/lib/auth'
+import { getActiveUser, unauth } from '@/lib/session'
 
 export async function POST(req) {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, requirement } = await req.json()
+    const user = await getActiveUser()
+    if (!user) return unauth()
 
-    if (!requirement || !userId) {
+    const { requirement } = await req.json()
+
+    if (!requirement) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('free_count, is_vip, vip_expiry')
-      .eq('id', userId)
-      .single()
-
-    if (!user) {
-      return NextResponse.json({ error: '用户不存在' }, { status: 404 })
-    }
-
-    const activeUser = await checkVipExpiry(supabase, user)
-    const canProceed = activeUser.is_vip || activeUser.free_count > 0
+    const canProceed = user.is_vip || user.free_count > 0
     if (!canProceed) {
       return NextResponse.json({ error: '次数不足，请购买年卡', needPayment: true }, { status: 403 })
     }
 
-    if (!activeUser.is_vip) {
+    if (!user.is_vip) {
       await supabase
         .from('users')
-        .update({ free_count: activeUser.free_count - 1 })
-        .eq('id', userId)
+        .update({ free_count: user.free_count - 1 })
+        .eq('id', user.id)
     }
 
     let openmaicData
@@ -41,11 +33,11 @@ export async function POST(req) {
       // OPENMAIC_BASE_URL 优先（本地开发/自建部署），否则走 Vercel rewrite proxy
       const openmaicUrl = process.env.OPENMAIC_BASE_URL
         ? `${process.env.OPENMAIC_BASE_URL}/api/generate-classroom`
-        : `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom`
+        : `https://openmaic.kanshier.top/api/generate-classroom`
       const res = await fetch(openmaicUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requirement }),
+        body: JSON.stringify({ requirement, enableTTS: true }),
       })
       if (!res.ok) {
         throw new Error(`OpenMAIC returned ${res.status}`)
@@ -53,8 +45,8 @@ export async function POST(req) {
       openmaicData = await res.json()
     } catch (e) {
       // OpenMAIC 不可达，回滚次数
-      if (!activeUser.is_vip) {
-        await supabase.from('users').update({ free_count: activeUser.free_count }).eq('id', userId)
+      if (!user.is_vip) {
+        await supabase.from('users').update({ free_count: user.free_count }).eq('id', user.id)
       }
       return NextResponse.json({ error: `课程生成服务不可达: ${e.message}` }, { status: 502 })
     }
@@ -62,7 +54,7 @@ export async function POST(req) {
     const { data: reading, error: readingErr } = await supabase
       .from('readings')
       .insert({
-        user_id: userId,
+        user_id: user.id,
         service_type: 'zhihuisuke',
         input_data: { requirement, openmaic_job_id: openmaicData.jobId },
         result_data: { status: 'generating', step: openmaicData.step, progress: openmaicData.progress },
@@ -79,7 +71,7 @@ export async function POST(req) {
       jobId: openmaicData.jobId,
       courseRecordId: reading.id,
       pollUrl: `/api/zhihuisuke/status/${openmaicData.jobId}?record_id=${reading.id}`,
-      remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1,
+      remaining: user.is_vip ? -1 : user.free_count - 1,
     })
   } catch (err) {
     console.error('zhihuisuke generate error:', err.message)

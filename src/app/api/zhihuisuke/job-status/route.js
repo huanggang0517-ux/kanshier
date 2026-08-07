@@ -3,6 +3,13 @@ import { getSupabase } from '@/lib/supabase'
 
 export async function POST(req) {
   try {
+    // Webhook 鉴权：请求头 x-webhook-secret 必须等于 OPENMAIC_WEBHOOK_SECRET
+    const expected = process.env.OPENMAIC_WEBHOOK_SECRET
+    const secret = req.headers.get('x-webhook-secret')
+    if (!expected || !secret || secret !== expected) {
+      return NextResponse.json({ error: '未授权' }, { status: 401 })
+    }
+
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 

@@ -1,42 +1,50 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Loading from '@/components/ui/Loading'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading } = useAuth()
   const [users, setUsers] = useState([])
   const [pendingOrders, setPendingOrders] = useState([])
   const [ebookOrders, setEbookOrders] = useState([])
   const [msg, setMsg] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [listLoading, setListLoading] = useState(true)
   const [filter, setFilter] = useState('all') // all | ebook | kanshier
 
-  const ADMIN_PHONE = '17614130826'
+  useEffect(() => {
+    if (!loading && !user) { router.push('/login'); return }
+    if (user && !user.is_admin) router.push('/')
+  }, [loading, user, router])
+
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin')
+      if (!res.ok) return
+      const data = await res.json()
+      setUsers(data.users || [])
+      setPendingOrders(data.pendingOrders || [])
+      setEbookOrders(data.ebookOrders || [])
+    } catch {}
+    setListLoading(false)
+  }, [])
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) { router.push('/login'); return }
-    if (u.phone !== ADMIN_PHONE) { router.push('/'); return }
-    setUser(u)
-    fetch(`/api/admin?adminId=${u.id}`)
-      .then(r => r.json())
-      .then(data => { setUsers(data.users || []); setPendingOrders(data.pendingOrders || []); setEbookOrders(data.ebookOrders || []); setLoading(false) })
-      .catch(() => { setLoading(false) })
-  }, [router])
+    if (user?.is_admin) loadData()
+  }, [user, loadData])
 
   async function handleAction(userId, action, orderId) {
     setMsg('')
     const body = orderId
-      ? { userId, action, adminId: user.id, orderId }
-      : { userId, action, adminId: user.id }
+      ? { userId, action, orderId }
+      : { userId, action }
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -45,29 +53,8 @@ export default function AdminPage() {
     const data = await res.json()
     if (!res.ok) { setMsg(data.error); return }
     setMsg(data.message)
-
-    if (action === 'confirm_payment') {
-      setPendingOrders(prev => prev.filter(o => o.id !== orderId))
-      fetch(`/api/admin?adminId=${user.id}`)
-        .then(r => r.json())
-        .then(data => setUsers(data.users || []))
-      return
-    }
-
-    if (action === 'confirm_ebook_payment') {
-      setEbookOrders(prev => prev.filter(o => o.id !== orderId))
-      fetch(`/api/admin?adminId=${user.id}`)
-        .then(r => r.json())
-        .then(data => setUsers(data.users || []))
-      return
-    }
-
-    const updated = users.map(u =>
-      u.id === userId
-        ? { ...u, is_vip: action === 'set_vip', vip_expiry: action === 'set_vip' ? new Date().toISOString() : null, free_count: action === 'set_vip' ? 999 : 0 }
-        : u
-    )
-    setUsers(updated)
+    // 操作后重拉列表，避免前端状态错乱
+    loadData()
   }
 
   return (
@@ -86,7 +73,7 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      {loading ? (
+      {listLoading ? (
         <Loading />
       ) : (
         <div className="flex flex-col gap-4">
@@ -116,8 +103,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* 待确认付款 — VIP */
-}
+          {/* 待确认付款 — VIP */}
           {pendingOrders.filter(o => o.input_data?.status === 'pending').length > 0 && (
             <div>
               <h3 className="text-sm font-medium mb-2 font-serif tracking-wider" style={{ color: 'var(--color-primary)' }}>

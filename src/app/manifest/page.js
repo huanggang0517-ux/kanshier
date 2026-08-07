@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Loading from '@/components/ui/Loading'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
 
@@ -169,7 +169,7 @@ function MiniMonth({ year, month, entries, today, onClick, onDateClick }) {
 
 export default function ManifestGridPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading: authLoading } = useAuth()
   const [year, setYear] = useState(new Date().getFullYear())
   const [entries, setEntries] = useState({})
   const [loading, setLoading] = useState(true)
@@ -177,18 +177,15 @@ export default function ManifestGridPage() {
   const [expandedMonth, setExpandedMonth] = useState(null)
 
   useEffect(() => {
-    const u = getUser()
-    setUser(u)
-    if (!u) router.replace('/login')
-  }, [router])
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
 
   const loadYear = useCallback((y) => {
-    if (!user) return
     setLoading(true)
     setYear(y)
     setErrMsg('')
     setExpandedMonth(null)
-    fetch(`/api/manifest?user_id=${user.id}&year=${y}`)
+    fetch(`/api/manifest?year=${y}`)
       .then(r => r.json().then(body => ({ ok: r.ok, body })))
       .then(({ ok, body }) => {
         if (!ok) { setErrMsg(body.error || '请求失败'); setLoading(false); return }
@@ -198,13 +195,14 @@ export default function ManifestGridPage() {
         setLoading(false)
       })
       .catch((e) => { setErrMsg(e.message); setLoading(false) })
-  }, [user])
+  }, [])
 
   const pathname = usePathname()
 
   useEffect(() => {
+    if (authLoading || !user) return
     loadYear(year)
-  }, [user, year, loadYear, pathname])
+  }, [user, year, loadYear, pathname, authLoading])
 
   const today = new Date().toISOString().split('T')[0]
 

@@ -5,13 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Loading from '@/components/ui/Loading'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import { createCanvasState, renderAllStrokes } from '@/lib/manifest/brush'
 
 export default function ManifestEntryPage() {
   const { date } = useParams()
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading: authLoading } = useAuth()
   const [entry, setEntry] = useState(null)
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState('loading')
@@ -24,14 +24,12 @@ export default function ManifestEntryPage() {
   const stateRef = useRef(null)
 
   useEffect(() => {
-    const u = getUser()
-    setUser(u)
-    if (!u) router.push('/login')
-  }, [router])
+    if (!authLoading && !user) router.push('/login')
+  }, [authLoading, user, router])
 
   useEffect(() => {
-    if (!user) return
-    fetch(`/api/manifest?user_id=${user.id}&year=${date?.slice(0, 4)}`)
+    if (authLoading || !user) return
+    fetch(`/api/manifest?year=${date?.slice(0, 4)}`)
       .then(r => r.json())
       .then(data => {
         const found = (data.entries || []).find(e => e.date === date)
@@ -41,7 +39,7 @@ export default function ManifestEntryPage() {
         setLoading(false)
       })
       .catch(() => router.push('/manifest'))
-  }, [user, date, router])
+  }, [authLoading, user, date, router])
 
   // 回放
   useEffect(() => {

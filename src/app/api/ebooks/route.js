@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { getSupabase } from '@/lib/supabase'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-
-const ADMIN_PHONE = '17614130826'
-
-async function isAdmin(supabase, userId) {
-  if (!userId) return false
-  const { data } = await supabase.from('users').select('phone').eq('id', userId).single()
-  return data?.phone === ADMIN_PHONE
-}
+import { getSessionUser, forbidden, unauth } from '@/lib/session'
 
 export async function GET(req) {
   try {
@@ -18,7 +12,6 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
     const all = searchParams.get('all')
-    const adminId = searchParams.get('adminId')
 
     // 单本书详情
     if (id) {
@@ -28,10 +21,11 @@ export async function GET(req) {
     }
 
     // 管理员查看全部（含未发布）
-    if (all === 'true' && adminId) {
-      if (!(await isAdmin(supabase, adminId))) {
-        return NextResponse.json({ error: '无权限' }, { status: 403 })
-      }
+    if (all === 'true') {
+      const user = await getSessionUser()
+      if (!user) return unauth()
+      if (!user.is_admin) return forbidden()
+
       const { data } = await supabase.from('ebooks').select('*').order('created_at', { ascending: false })
       return NextResponse.json({ books: data || [] })
     }
@@ -50,12 +44,11 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const formData = await req.formData()
-    const adminId = formData.get('adminId')
-    if (!(await isAdmin(supabase, adminId))) {
-      return NextResponse.json({ error: '无权限' }, { status: 403 })
-    }
+    const user = await getSessionUser()
+    if (!user) return unauth()
+    if (!user.is_admin) return forbidden()
 
+    const formData = await req.formData()
     const action = formData.get('action')
 
     if (action === 'upload') {

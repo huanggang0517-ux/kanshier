@@ -2,15 +2,10 @@
 
 import Link from 'next/link'
 import ThemeToggle from './ThemeToggle'
-import { getUser } from '@/lib/utils'
-import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    setUser(getUser())
-  }, [])
+  const { user } = useAuth()
 
   return (
     <header className="flex items-center justify-between py-3">

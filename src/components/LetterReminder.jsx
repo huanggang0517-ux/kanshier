@@ -2,20 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
 export default function LetterReminder() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [letter, setLetter] = useState(null)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) return
+    if (loading || !user) return
 
-    fetch(`/api/letter?userId=${u.id}`)
+    fetch(`/api/letter`)
       .then(r => r.json())
       .then(data => {
         if (data.has_deliverable && data.letters.length > 0) {
@@ -23,18 +23,16 @@ export default function LetterReminder() {
         }
       })
       .catch(() => {})
-  }, [])
+  }, [loading, user])
 
   if (!letter || dismissed) return null
 
   async function handleOpen() {
-    const u = getUser()
-    if (!u) return
     try {
       await fetch('/api/letter/open', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: u.id, readingId: letter.id })
+        body: JSON.stringify({ readingId: letter.id })
       })
     } catch {}
     router.push(`/result/${letter.id}`)

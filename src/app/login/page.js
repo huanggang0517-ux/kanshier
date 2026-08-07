@@ -4,22 +4,17 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import Button from '@/components/ui/Button'
-import InkInput from '@/components/ui/InkInput'
-import Card from '@/components/ui/Card'
-import { setUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
-  const [showReset, setShowReset] = useState(false)
-  const [resetPhone, setResetPhone] = useState('')
-  const [resetPassword, setResetPassword] = useState('')
-  const [resetMsg, setResetMsg] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -40,7 +35,7 @@ export default function LoginPage() {
         return
       }
 
-      setUser(data.user)
+      login(data.user)
       router.push('/')
       router.refresh()
     } catch {
@@ -128,18 +123,10 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {isLogin && (
-          <p className="text-xs text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
-            <button onClick={() => setShowReset(true)} className="underline" style={{ color: 'var(--text-muted)' }}>
-              忘记密码？
-            </button>
-          </p>
-        )}
-
         <p className="text-xs text-center mt-4" style={{ color: 'var(--text-secondary)' }}>
           {isLogin ? '没有账号？' : '已有账号？'}
           <button
-            onClick={() => { setIsLogin(!isLogin); setError(''); setShowReset(false); setInviteCode('') }}
+            onClick={() => { setIsLogin(!isLogin); setError(''); setInviteCode('') }}
             className="ml-1 underline"
             style={{ color: 'var(--color-primary)' }}
           >
@@ -147,65 +134,9 @@ export default function LoginPage() {
           </button>
         </p>
 
-        {showReset && (
-          <Card variant="parchment" elevation="sm" decorations={{ corners: false, innerBorder: false }} className="mt-6">
-            <h3 className="text-sm font-medium mb-3 font-serif" style={{ color: 'var(--text-primary)' }}>重置密码</h3>
-            <div className="flex flex-col gap-3">
-              <input type="tel" placeholder="手机号" maxLength={11} value={resetPhone}
-                onChange={e => setResetPhone(e.target.value)}
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--text-primary)',
-                  padding: '12px 16px',
-                  fontSize: 14,
-                  outline: 'none',
-                  width: '100%',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }} />
-              <input type="password" placeholder="新密码（至少6位）" value={resetPassword}
-                onChange={e => setResetPassword(e.target.value)}
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--text-primary)',
-                  padding: '12px 16px',
-                  fontSize: 14,
-                  outline: 'none',
-                  width: '100%',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--border-focus)' }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border-color)' }} />
-              {resetMsg && (
-                <p className={`text-xs ${resetMsg.includes('成功') ? '' : ''}`}
-                  style={{ color: resetMsg.includes('成功') ? 'var(--color-success)' : 'var(--color-error)' }}>
-                  {resetMsg}
-                </p>
-              )}
-              <Button fullWidth variant="gold" onClick={async () => {
-                if (!resetPhone || !resetPassword) { setResetMsg('请填写完整'); return }
-                if (resetPassword.length < 6) { setResetMsg('密码至少6位'); return }
-                try {
-                  const r = await fetch('/api/auth/reset-password', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: resetPhone, newPassword: resetPassword })
-                  })
-                  const d = await r.json()
-                  if (!r.ok) { setResetMsg(d.error); return }
-                  setResetMsg('密码重置成功，请用新密码登录')
-                  setResetPhone('')
-                  setResetPassword('')
-                  setTimeout(() => setShowReset(false), 2000)
-                } catch { setResetMsg('网络错误') }
-              }}>
-                重置密码
-              </Button>
-            </div>
-          </Card>
-        )}
+        <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+          忘记密码？请联系管理员重置
+        </p>
       </div>
     </>
   )

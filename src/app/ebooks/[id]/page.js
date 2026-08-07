@@ -7,27 +7,25 @@ import PageNav from '@/components/ui/PageNav'
 import Loading from '@/components/ui/Loading'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function EbookReaderPage() {
   const { id } = useParams()
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading } = useAuth()
   const [book, setBook] = useState(null)
   const [signedUrl, setSignedUrl] = useState('')
   const [notes, setNotes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [bookLoading, setBookLoading] = useState(true)
   const [showNotes, setShowNotes] = useState(false)
   const [iframeError, setIframeError] = useState(false)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) { router.push('/login'); return }
-    setUser(u)
-  }, [router])
+    if (!loading && !user) router.push('/login')
+  }, [loading, user, router])
 
   useEffect(() => {
-    if (!user || !id) return
+    if (loading || !user || !id) return
 
     async function load() {
       try {
@@ -36,16 +34,11 @@ export default function EbookReaderPage() {
         const bookData = await bookRes.json()
         setBook(bookData.book)
 
-        // 检查权限并获取签名 URL
-        if (user.ebook_access || user.phone === '17614130826') {
-          const urlRes = await fetch(`/api/ebooks/read?id=${id}&userId=${user.id}`)
-          if (urlRes.ok) {
-            const urlData = await urlRes.json()
-            setSignedUrl(urlData.signedUrl)
-          } else if (urlRes.status === 403) {
-            router.push('/ebooks')
-            return
-          }
+        // 尝试获取签名 URL（服务端校验权限：admin 或已解锁且已发布）
+        const urlRes = await fetch(`/api/ebooks/read?id=${id}`)
+        if (urlRes.ok) {
+          const urlData = await urlRes.json()
+          setSignedUrl(urlData.signedUrl)
         } else {
           router.push('/ebooks')
           return
@@ -60,13 +53,13 @@ export default function EbookReaderPage() {
       } catch {
         router.push('/ebooks')
       } finally {
-        setLoading(false)
+        setBookLoading(false)
       }
     }
     load()
-  }, [user, id, router])
+  }, [loading, user, id, router])
 
-  if (loading) {
+  if (bookLoading) {
     return (
       <>
         <Header />

@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import LetterReminder from '@/components/LetterReminder'
 import { Noto_Serif_SC } from 'next/font/google'
 import './globals.css'
@@ -27,10 +28,12 @@ export default function RootLayout({ children }) {
     <html lang="zh-CN" suppressHydrationWarning>
       <body className={notoSerif.variable}>
         <ThemeProvider>
-          <div className="app-container">
-            {children}
-            <LetterReminder />
-          </div>
+          <AuthProvider>
+            <div className="app-container">
+              {children}
+              <LetterReminder />
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -9,7 +9,7 @@ const nextConfig = {
     return [
       {
         source: '/api/zhihuisuke/openmaic/:path*',
-        destination: 'https://openmaic-zhihuisuke.vercel.app/api/:path*',
+        destination: 'https://openmaic.kanshier.top/api/:path*',
       },
     ]
   },

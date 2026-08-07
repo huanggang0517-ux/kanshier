@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { getSessionUser, unauth } from '@/lib/session'
+import { getActiveUser, unauth } from '@/lib/session'
 
 export async function GET() {
-  const user = await getSessionUser()
+  const user = await getActiveUser()
   if (!user) return unauth()
   return NextResponse.json({ user })
 }

@@ -8,13 +8,11 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
 import InkInput from '@/components/ui/InkInput'
-import { getUser } from '@/lib/utils'
-
-const ADMIN_PHONE = '17614130826'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminEbooksPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading: authLoading } = useAuth()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
@@ -34,16 +32,14 @@ export default function AdminEbooksPage() {
   const [savingNote, setSavingNote] = useState(false)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) { router.push('/login'); return }
-    if (u.phone !== ADMIN_PHONE) { router.push('/'); return }
-    setUser(u)
-    loadBooks(u)
-  }, [router])
+    if (!authLoading && !user) { router.push('/login'); return }
+    if (user && !user.is_admin) { router.push('/'); return }
+    if (user?.is_admin) loadBooks()
+  }, [authLoading, user, router])
 
-  async function loadBooks(u) {
+  async function loadBooks() {
     try {
-      const res = await fetch(`/api/ebooks?all=true&adminId=${(u || user).id}`)
+      const res = await fetch('/api/ebooks?all=true')
       const data = await res.json()
       setBooks(data.books || [])
 
@@ -74,7 +70,6 @@ export default function AdminEbooksPage() {
     try {
       const formData = new FormData()
       formData.append('action', 'upload')
-      formData.append('adminId', user.id)
       formData.append('title', uploadTitle.trim())
       formData.append('author', uploadAuthor.trim())
       formData.append('description', uploadDesc.trim())
@@ -90,7 +85,7 @@ export default function AdminEbooksPage() {
       setUploadAuthor('')
       setUploadDesc('')
       setUploadFile(null)
-      loadBooks(user)
+      loadBooks()
     } catch {
       setMsg('上传失败')
     }
@@ -100,28 +95,26 @@ export default function AdminEbooksPage() {
   async function handleTogglePublish(bookId) {
     const formData = new FormData()
     formData.append('action', 'toggle_publish')
-    formData.append('adminId', user.id)
     formData.append('bookId', bookId)
 
     const res = await fetch('/api/ebooks', { method: 'POST', body: formData })
     const data = await res.json()
     if (res.ok) setMsg(data.message)
     else setMsg(data.error)
-    loadBooks(user)
+    loadBooks()
   }
 
   async function handleDelete(bookId) {
     if (!confirm('确定删除此书？PDF 文件将被一并移除')) return
     const formData = new FormData()
     formData.append('action', 'delete')
-    formData.append('adminId', user.id)
     formData.append('bookId', bookId)
 
     const res = await fetch('/api/ebooks', { method: 'POST', body: formData })
     const data = await res.json()
     if (res.ok) setMsg(data.message)
     else setMsg(data.error)
-    loadBooks(user)
+    loadBooks()
   }
 
   async function handleAddNote(ebookId) {
@@ -131,26 +124,26 @@ export default function AdminEbooksPage() {
       const res = await fetch('/api/ebooks/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: user.id, ebookId, content: noteContent.trim() })
+        body: JSON.stringify({ ebookId, content: noteContent.trim() })
       })
       if (res.ok) {
         setNoteContent('')
         setMsg('批注已添加')
-        loadBooks(user)
+        loadBooks()
       }
     } catch {}
     setSavingNote(false)
   }
 
   async function handleDeleteNote(noteId) {
-    const res = await fetch(`/api/ebooks/notes?adminId=${user.id}&noteId=${noteId}`, { method: 'DELETE' })
+    const res = await fetch(`/api/ebooks/notes?noteId=${noteId}`, { method: 'DELETE' })
     if (res.ok) {
       setMsg('批注已删除')
-      loadBooks(user)
+      loadBooks()
     }
   }
 
-  if (loading) return <><Header /><Loading /></>
+  if (authLoading || loading) return <><Header /><Loading /></>
 
   return (
     <>

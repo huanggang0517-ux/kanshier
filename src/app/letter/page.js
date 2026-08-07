@@ -6,21 +6,19 @@ import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Button from '@/components/ui/Button'
 import InkInput from '@/components/ui/InkInput'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LetterPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [content, setContent] = useState('')
   const [futureDate, setFutureDate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) router.push('/login')
-    else setUser(u)
-  }, [router])
+    if (!authLoading && !user) router.push('/login')
+  }, [authLoading, user, router])
 
   async function handleSubmit() {
     if (!user) { router.push('/login'); return }
@@ -33,7 +31,7 @@ export default function LetterPage() {
       const res = await fetch('/api/letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, content: content.trim(), futureDate })
+        body: JSON.stringify({ content: content.trim(), futureDate })
       })
       const data = await res.json()
       if (!res.ok) { if (res.status === 403) { router.push('/vip'); return }; setError(data.error); return }

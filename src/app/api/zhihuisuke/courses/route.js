@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
+import { getSessionUser, unauth } from '@/lib/session'
 
-export async function GET(req) {
+export async function GET() {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('user_id')
-
-    if (!userId) {
-      return NextResponse.json({ error: '缺少用户 ID' }, { status: 400 })
-    }
+    const user = await getSessionUser()
+    if (!user) return unauth()
 
     const { data: courses, error } = await supabase
       .from('readings')
       .select('id, input_data, result_data, created_at')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('service_type', 'zhihuisuke')
       .order('created_at', { ascending: false })
       .limit(50)

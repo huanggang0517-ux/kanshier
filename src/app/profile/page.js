@@ -6,11 +6,11 @@ import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { getUser, clearUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading, logout } = useAuth()
   const [showChangePwd, setShowChangePwd] = useState(false)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -20,13 +20,11 @@ export default function ProfilePage() {
   const [pwdSuccess, setPwdSuccess] = useState('')
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) router.push('/login')
-    else setUser(u)
-  }, [router])
+    if (!loading && !user) router.push('/login')
+  }, [loading, user, router])
 
-  function handleLogout() {
-    clearUser()
+  async function handleLogout() {
+    await logout()
     router.push('/')
     router.refresh()
   }
@@ -44,7 +42,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, oldPassword, newPassword })
+        body: JSON.stringify({ oldPassword, newPassword })
       })
       const data = await res.json()
       if (!res.ok) { setPwdError(data.error); return }
@@ -60,6 +58,7 @@ export default function ProfilePage() {
     }
   }
 
+  if (loading) return null
   if (!user) return null
 
   return (
@@ -123,7 +122,7 @@ export default function ProfilePage() {
         </a>
       )}
 
-      {user.phone === '17614130826' && (
+      {user.is_admin && (
         <a href="/admin">
           <Card variant="parchment" elevation="xs" decorations={{ corners: false, innerBorder: false }} className="mb-4">
             <div className="flex justify-between items-center">

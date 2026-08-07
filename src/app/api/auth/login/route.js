@@ -1,12 +1,7 @@
 import { getSupabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-
-function verifyPassword(password, stored) {
-  const [salt, hash] = stored.split(':')
-  const verify = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
-  return hash === verify
-}
+import { verifyPassword } from '@/lib/password'
+import { createSession, attachSessionCookie, serializeUser } from '@/lib/session'
 
 export async function POST(req) {
   try {
@@ -29,17 +24,9 @@ export async function POST(req) {
       return NextResponse.json({ error: '密码错误' }, { status: 401 })
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        free_count: user.free_count,
-        is_vip: user.is_vip,
-        vip_expiry: user.vip_expiry,
-        invite_code: user.invite_code
-      }
-    })
+    const { token } = await createSession(user.id)
+    const res = NextResponse.json({ success: true, user: serializeUser(user) })
+    return attachSessionCookie(res, token)
   } catch (err) {
     console.error('login error:', err)
     return NextResponse.json({ error: '登录失败' }, { status: 500 })

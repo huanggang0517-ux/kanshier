@@ -8,20 +8,19 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
 import SealStamp from '@/components/ui/SealStamp'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function EbooksPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState(null)
   const [showPurchase, setShowPurchase] = useState(false)
   const [payMethod, setPayMethod] = useState('wechat')
   const [paid, setPaid] = useState(false)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
 
   useEffect(() => {
-    setUser(getUser())
     fetch('/api/ebooks')
       .then(r => r.json())
       .then(data => setBooks(data.books || []))
@@ -36,14 +35,17 @@ export default function EbooksPage() {
       const res = await fetch('/api/ebooks/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, method: payMethod })
+        body: JSON.stringify({ method: payMethod })
       })
-      if (!res.ok) {
-        const data = await res.json()
-        if (data.error) { alert(data.error); return }
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.success === false) {
+        alert(data.error || '提交失败，请重试')
+        return
       }
       setPaid(true)
-    } catch {}
+    } catch {
+      alert('网络错误，请重试')
+    }
     setPurchaseLoading(false)
   }
 

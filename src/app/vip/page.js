@@ -6,17 +6,13 @@ import Header from '@/components/Header'
 import PageNav from '@/components/ui/PageNav'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function VipPage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user } = useAuth()
   const [payMethod, setPayMethod] = useState('wechat')
   const [paid, setPaid] = useState(false)
-
-  useEffect(() => {
-    setUser(getUser())
-  }, [])
 
   async function handleConfirmPayment() {
     if (!user) { router.push('/login'); return }
@@ -26,7 +22,7 @@ export default function VipPage() {
       await fetch('/api/vip/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, method: payMethod })
+        body: JSON.stringify({ method: payMethod })
       })
     } catch {}
   }

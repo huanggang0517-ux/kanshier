@@ -7,23 +7,21 @@ import PageNav from '@/components/ui/PageNav'
 import GoldBadge from '@/components/ui/GoldBadge'
 import Button from '@/components/ui/Button'
 import InkInput from '@/components/ui/InkInput'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function KanshierPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [question, setQuestion] = useState('')
   const [inputType, setInputType] = useState('char')
   const [chars, setChars] = useState(['', '', ''])
   const [numbers, setNumbers] = useState(['', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) router.push('/login')
-    else setUser(u)
-  }, [router])
+    if (!authLoading && !user) router.push('/login')
+  }, [authLoading, user, router])
 
   function getInputValue() {
     return inputType === 'char' ? chars.join('') : numbers.join('')
@@ -55,7 +53,6 @@ export default function KanshierPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
           question: question.trim(),
           inputType,
           inputValue: value

@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { callDeepSeek } from '@/lib/deepseek'
-import { checkVipExpiry } from '@/lib/auth'
+import { getSessionUser, getActiveUser, unauth } from '@/lib/session'
 
 export async function GET(req) {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('userId')
-    if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+    const user = await getSessionUser()
+    if (!user) return unauth()
 
     const { data: readings } = await supabase
       .from('readings')
       .select('id, created_at, input_data')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('service_type', 'letter')
       .order('created_at', { ascending: false })
 
@@ -67,17 +66,15 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, content, futureDate } = await req.json()
-    if (!userId || !content) {
+    const user = await getActiveUser()
+    if (!user) return unauth()
+
+    const { content, futureDate } = await req.json()
+    if (!content) {
       return NextResponse.json({ error: '请写一封信' }, { status: 400 })
     }
 
-    const { data: user } = await supabase
-      .from('users').select('free_count, is_vip, vip_expiry').eq('id', userId).single()
-    if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 })
-
-    const activeUser = await checkVipExpiry(supabase, user)
-    if (!activeUser.is_vip && activeUser.free_count < 1) {
+    if (!user.is_vip && user.free_count < 1) {
       return NextResponse.json({ error: '次数不足' }, { status: 403 })
     }
 
@@ -98,14 +95,14 @@ ${futureDate ? `这封信将在 ${futureDate} 被打开。` : ''}
       return NextResponse.json({ error: '生成异常' }, { status: 500 })
     }
 
-    if (!activeUser.is_vip) {
-      await supabase.from('users').update({ free_count: activeUser.free_count - 1 }).eq('id', userId)
+    if (!user.is_vip) {
+      await supabase.from('users').update({ free_count: user.free_count - 1 }).eq('id', user.id)
     }
 
     const { data: reading } = await supabase
       .from('readings')
       .insert({
-        user_id: userId,
+        user_id: user.id,
         service_type: 'letter',
         input_data: { content, futureDate },
         result_data: parsed
@@ -113,7 +110,7 @@ ${futureDate ? `这封信将在 ${futureDate} 被打开。` : ''}
       .select()
       .single()
 
-    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining: activeUser.is_vip ? -1 : activeUser.free_count - 1 })
+    return NextResponse.json({ success: true, reading_id: reading.id, result: parsed, remaining: user.is_vip ? -1 : user.free_count - 1 })
   } catch (err) {
     console.error('letter error:', err)
     return NextResponse.json({ error: '服务器繁忙' }, { status: 500 })

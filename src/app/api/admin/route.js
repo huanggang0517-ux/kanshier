@@ -1,28 +1,21 @@
 import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NextResponse } from 'next/server'
-
-const ADMIN_PHONE = '17614130826'
-
-async function isAdmin(supabase, userId) {
-  if (!userId) return false
-  const { data } = await supabase.from('users').select('phone').eq('id', userId).single()
-  return data?.phone === ADMIN_PHONE
-}
+import { hashPassword } from '@/lib/password'
+import { getSessionUser, forbidden, unauth } from '@/lib/session'
 
 export async function GET(req) {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { searchParams } = new URL(req.url)
-    const adminId = searchParams.get('adminId')
-    if (!(await isAdmin(supabase, adminId))) {
-      return NextResponse.json({ error: '无权限' }, { status: 403 })
-    }
+    const user = await getSessionUser()
+    if (!user) return unauth()
+    if (!user.is_admin) return forbidden()
 
     const { data: users } = await supabase
       .from('users')
-      .select('id, phone, free_count, is_vip, vip_expiry, invite_code, created_at, ebook_access')
+      .select('id, phone, free_count, is_vip, vip_expiry, invite_code, created_at, ebook_access, is_admin')
       .order('created_at', { ascending: false })
 
     const { data: vipOrders } = await supabase
@@ -59,12 +52,13 @@ export async function POST(req) {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
-    const { userId, action, adminId, orderId } = await req.json()
+    const user = await getSessionUser()
+    if (!user) return unauth()
+    if (!user.is_admin) return forbidden()
+
+    const { userId, action, orderId } = await req.json()
     if (!action) {
       return NextResponse.json({ error: '参数不完整' }, { status: 400 })
-    }
-    if (!(await isAdmin(supabase, adminId))) {
-      return NextResponse.json({ error: '无权限' }, { status: 403 })
     }
 
     if (action === 'set_vip') {
@@ -144,7 +138,7 @@ export async function POST(req) {
 
     if (action === 'add_count') {
       if (!userId) return NextResponse.json({ error: '参数不完整' }, { status: 400 })
-      const { data: user } = await supabase
+      const { data: targetUser } = await supabase
         .from('users')
         .select('free_count')
         .eq('id', userId)
@@ -152,10 +146,39 @@ export async function POST(req) {
 
       await supabase
         .from('users')
-        .update({ free_count: (user?.free_count || 0) + 1 })
+        .update({ free_count: (targetUser?.free_count || 0) + 1 })
         .eq('id', userId)
 
       return NextResponse.json({ success: true, message: '已增加1次免费次数' })
+    }
+
+    if (action === 'reset_password') {
+      const { phone, newPassword } = await req.json()
+      if (!phone || !newPassword || newPassword.length < 6) {
+        return NextResponse.json({ error: '参数不完整' }, { status: 400 })
+      }
+
+      const { data: target } = await supabase
+        .from('users')
+        .select('id')
+        .eq('phone', phone)
+        .single()
+
+      if (!target) return NextResponse.json({ error: '用户不存在' }, { status: 404 })
+
+      const password_hash = hashPassword(newPassword)
+      await supabase
+        .from('users')
+        .update({ password_hash })
+        .eq('id', target.id)
+
+      // 踢掉该用户所有旧会话
+      const admin = getSupabaseAdmin()
+      if (admin) {
+        await admin.from('sessions').delete().eq('user_id', target.id)
+      }
+
+      return NextResponse.json({ success: true, message: '密码已重置' })
     }
 
     return NextResponse.json({ error: '未知操作' }, { status: 400 })

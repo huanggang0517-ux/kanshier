@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
+import { getSessionUser, unauth, forbidden } from '@/lib/session'
 
 export async function GET(req, { params }) {
   try {
     const supabase = getSupabase()
     if (!supabase) return NextResponse.json({ error: '数据库未配置' }, { status: 500 })
 
+    const user = await getSessionUser()
+    if (!user) return unauth()
+
     const { jobId } = await params
     const recordId = req.nextUrl.searchParams.get('record_id')
 
-    // 优先从 Supabase 读取状态（webhook 实时同步 OpenMAIC 进度）
+    // 有 record_id 时校验该记录归属当前用户
     if (recordId) {
       const { data: record } = await supabase
         .from('readings')
-        .select('result_data')
+        .select('user_id, result_data')
         .eq('id', recordId)
         .single()
+
+      if (!record) return NextResponse.json({ error: '记录不存在' }, { status: 404 })
+      if (record.user_id !== user.id) return forbidden()
 
       const rd = record?.result_data
       if (rd?.status) {
@@ -26,7 +33,7 @@ export async function GET(req, { params }) {
     // Supabase 无数据则轮询 OpenMAIC（优先本地 URL）
     const openmaicUrl = process.env.OPENMAIC_BASE_URL
       ? `${process.env.OPENMAIC_BASE_URL}/api/generate-classroom/${jobId}`
-      : `https://kanshier.top/api/zhihuisuke/openmaic/generate-classroom/${jobId}`
+      : `https://openmaic.kanshier.top/api/generate-classroom/${jobId}`
     const openmaicRes = await fetch(openmaicUrl, { cache: 'no-store' })
 
     if (!openmaicRes.ok) {

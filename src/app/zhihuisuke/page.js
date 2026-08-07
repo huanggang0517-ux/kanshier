@@ -8,11 +8,11 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import InkInput from '@/components/ui/InkInput'
 import Loading from '@/components/ui/Loading'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ZhihuisukePage() {
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const { user, loading, refresh } = useAuth()
   const [requirement, setRequirement] = useState('')
   const [generating, setGenerating] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
@@ -23,21 +23,18 @@ export default function ZhihuisukePage() {
   const [coursesLoading, setCoursesLoading] = useState(true)
 
   useEffect(() => {
-    const u = getUser()
-    if (!u) router.push('/login')
-    else setUser(u)
-  }, [router])
+    if (!loading && !user) router.push('/login')
+  }, [loading, user, router])
 
   const loadCourses = useCallback(async () => {
-    if (!user) return
     try {
-      const res = await fetch(`/api/zhihuisuke/courses?user_id=${user.id}`)
+      const res = await fetch('/api/zhihuisuke/courses')
       const data = await res.json()
       if (data.courses) setCourses(data.courses)
     } catch {} finally {
       setCoursesLoading(false)
     }
-  }, [user])
+  }, [])
 
   useEffect(() => {
     if (user) loadCourses()
@@ -55,7 +52,7 @@ export default function ZhihuisukePage() {
       const res = await fetch('/api/zhihuisuke/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, requirement: requirement.trim() }),
+        body: JSON.stringify({ requirement: requirement.trim() }),
       })
       const data = await res.json()
 
@@ -69,10 +66,8 @@ export default function ZhihuisukePage() {
         return
       }
 
-      // 更新剩余次数
-      if (data.remaining !== undefined) {
-        setUser(prev => ({ ...prev, free_count: Math.max(0, data.remaining) }))
-      }
+      // 刷新剩余次数
+      refresh()
 
       setStatusMsg('正在生成课程内容，请稍候...')
       setProgress(10)

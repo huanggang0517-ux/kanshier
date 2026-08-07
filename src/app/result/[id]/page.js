@@ -7,22 +7,23 @@ import PageNav from '@/components/ui/PageNav'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/ui/Loading'
 import ResultDisplay from '@/components/ResultDisplay'
-import { getUser } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ResultPage() {
   const { id } = useParams()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [result, setResult] = useState(null)
   const [serviceType, setServiceType] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (authLoading) return
+    if (!user) { router.push('/login'); return }
+
     async function fetchResult() {
       try {
-        const user = getUser()
-        if (!user) { router.push('/login'); return }
-
-        const res = await fetch(`/api/kanshier?id=${id}&user_id=${user.id}`)
+        const res = await fetch(`/api/kanshier?id=${id}`)
         const data = await res.json()
 
         if (!res.ok) {
@@ -39,7 +40,7 @@ export default function ResultPage() {
       }
     }
     fetchResult()
-  }, [id, router])
+  }, [id, router, authLoading, user])
 
   if (loading) {
     return (

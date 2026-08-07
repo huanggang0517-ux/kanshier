@@ -1,12 +1,7 @@
 import { getSupabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
-
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex')
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex')
-  return `${salt}:${hash}`
-}
+import { hashPassword } from '@/lib/password'
+import { createSession, attachSessionCookie, serializeUser } from '@/lib/session'
 
 function generateInviteCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -103,16 +98,9 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: newUser.id,
-        phone: newUser.phone,
-        free_count: newUser.free_count,
-        is_vip: newUser.is_vip,
-        invite_code: newUser.invite_code,
-      },
-    })
+    const { token } = await createSession(newUser.id)
+    const res = NextResponse.json({ success: true, user: serializeUser(newUser) })
+    return attachSessionCookie(res, token)
   } catch (err) {
     console.error('register error:', err.name, err.message, err.cause, err.code)
     return NextResponse.json({ error: `注册失败: ${err.message}`, detail: err.cause?.message || err.code }, { status: 500 })
