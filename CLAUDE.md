@@ -9,6 +9,7 @@ AI 命理小工具，古风 UI。Next.js 14 App Router + Supabase + Tailwind。
 - 给未来的信：写给明年自己（¥0.52）
 - 智慧速课：AI 一键生成多智能体互动课程（集成 OpenMAIC）
 - 藏经阁：电子书 PDF 阅读（¥16.8，管理员上传/批注）
+- 游艺阁：单文件 HTML 互动工具（管理员上传，公开访问，新标签页全屏打开）
 - 年卡会员：¥18.8/年，无限次（管理员人工确认收款开通）
 - Admin 后台：用户管理/订单确认/书籍管理/密码重置
 
@@ -40,6 +41,11 @@ NEXT_PUBLIC_OPENMAIC_FRONTEND_URL  # 课堂 iframe 前端域名（可选）
 
 ### 数据库迁移
 一次性迁移 `supabase/migrations/001_auth_groundwork.sql`（建 sessions 表 + users.is_admin 列 + 置管理员手机号 17614130826 为 admin）。后续 schema 变更同样在 supabase/migrations/ 里新增文件，手动在 Supabase SQL Editor 执行。
+
+`002_games.sql` — 游艺阁 `games` 表（含 RLS 开启、不开 policy）。配套 Storage 私有 bucket `games`（Dashboard 手动建，路径 `items/<uuid>.html`）。该表读写一律走 service-role，不走 anon client。
+
+### 游艺阁投递链路
+`/youyi` 列表 → `<a target="_blank">` 打开 `/youyi/<id>`。该路由 `src/app/youyi/[id]/route.js` 是服务端代理：service-role 从 storage 下载 HTML，加 CSP 后以 `text/html; charset=utf-8` 返回。**不要加 `sandbox` 指令**——会让文档变 opaque origin，localStorage 抛错，互动工具的存档就废了；改用 `default-src 'none'` + `connect-src 'none'` 白名单隔离。若未来要彻底隔离，给这条路挂独立子域，别删 CSP。
 
 ## 目录结构
 ```

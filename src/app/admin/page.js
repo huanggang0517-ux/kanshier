@@ -71,6 +71,9 @@ export default function AdminPage() {
         <Button fullWidth variant="gold" onClick={() => router.push('/admin/ebooks')}>
           书籍管理
         </Button>
+        <Button fullWidth variant="gold" onClick={() => router.push('/admin/youyi')}>
+          游艺阁管理
+        </Button>
       </div>
 
       {listLoading ? (

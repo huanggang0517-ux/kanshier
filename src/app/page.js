@@ -89,6 +89,15 @@ export default function HomePage() {
             description="电子书库 · ¥16.8 永久阅读"
           />
 
+          {/* 游艺阁 — 金色 */}
+          <FeatureCard
+            href="/youyi"
+            accent="gold"
+            icon={<span className="text-lg font-serif font-black" style={{ color: '#fff' }}>游</span>}
+            title="游艺阁"
+            description="互动小工具 · 即点即玩"
+          />
+
         </div>
 
         {/* ===== 会员 ===== */}
