@@ -20,8 +20,9 @@ export default function AdminPage() {
   const [filter, setFilter] = useState('all') // all | ebook | kanshier
 
   useEffect(() => {
-    if (!loading && !user) { router.push('/login'); return }
-    if (user && !user.is_admin) router.push('/')
+    if (loading) return
+    if (!user) { setListLoading(false); router.push('/login'); return }
+    if (!user.is_admin) { setListLoading(false); router.push('/'); return }
   }, [loading, user, router])
 
   const loadData = useCallback(async () => {

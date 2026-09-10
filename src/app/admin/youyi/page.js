@@ -25,9 +25,10 @@ export default function AdminYouyiPage() {
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    if (!authLoading && !user) { router.push('/login'); return }
-    if (user && !user.is_admin) { router.push('/'); return }
-    if (user?.is_admin) loadItems()
+    if (authLoading) return
+    if (!user) { setLoading(false); router.push('/login'); return }
+    if (!user.is_admin) { setLoading(false); router.push('/'); return }
+    loadItems()
   }, [authLoading, user, router])
 
   async function loadItems() {
